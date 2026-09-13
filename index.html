@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -61,6 +62,20 @@
       animation: fadeInStatic 10s ease-in-out forwards;
     }
 
+    /* Color Glitch Canvas Overlay */
+    #glitch-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+      transition: opacity 0.3s ease;
+    }
+
     @keyframes fadeInStatic {
       0% { opacity: 0; }
       100% { opacity: 0.25; }
@@ -73,7 +88,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 3;
+      z-index: 4;
       pointer-events: none;
       opacity: 0;
       background: linear-gradient(
@@ -105,7 +120,7 @@
         rgba(255, 255, 255, 0.08) 50%,
         rgba(255, 255, 255, 0) 100%
       );
-      z-index: 4;
+      z-index: 5;
       pointer-events: none;
       animation: scanBar 8s linear infinite;
     }
@@ -118,7 +133,7 @@
     /* Main Content */
     .content {
       position: relative;
-      z-index: 5;
+      z-index: 6;
       max-width: 600px;
       padding: 20px;
       width: 100%;
@@ -168,40 +183,40 @@
       margin-top: 1rem;
     }
 
-    /* --- GLITCH EFFECTS (Triggered at 10s) --- */
+    /* --- GLITCH EFFECTS (Triggered at 20s) --- */
     .glitching .viewport-wrapper {
-      animation: screenShake 0.4s infinite alternate;
+      animation: screenShake 0.25s infinite alternate;
     }
 
     .glitching h1 {
-      animation: textJitter 0.2s infinite;
+      animation: textJitter 0.15s infinite;
     }
 
     .glitching .key-input {
-      animation: borderFlicker 0.15s infinite;
+      animation: borderFlicker 0.1s infinite;
     }
 
     @keyframes screenShake {
       0% { transform: translate(0, 0); }
-      20% { transform: translate(-3px, 2px); }
-      40% { transform: translate(3px, -1px); }
-      60% { transform: translate(-2px, -2px); }
-      80% { transform: translate(2px, 3px); }
+      20% { transform: translate(-5px, 3px); }
+      40% { transform: translate(4px, -2px); }
+      60% { transform: translate(-3px, -3px); }
+      80% { transform: translate(5px, 2px); }
       100% { transform: translate(0, 0); }
     }
 
     @keyframes textJitter {
       0% { transform: skew(0deg); }
-      20% { transform: skew(4deg) translate(-2px, 1px); }
-      40% { transform: skew(-3deg) translate(2px, -1px); }
+      20% { transform: skew(8deg) translate(-4px, 2px); }
+      40% { transform: skew(-6deg) translate(4px, -2px); }
       60% { transform: skew(0deg); }
-      80% { transform: skew(5deg); }
+      80% { transform: skew(10deg); }
       100% { transform: skew(0deg); }
     }
 
     @keyframes borderFlicker {
       0% { border-color: #ffffff; box-shadow: none; }
-      50% { border-color: #ff0055; box-shadow: -2px 0 #00ffff; }
+      50% { border-color: #ff0055; box-shadow: -4px 0 #00ffff; }
       100% { border-color: #ffffff; box-shadow: none; }
     }
 
@@ -252,6 +267,7 @@
   <div class="viewport-wrapper">
     <div class="background-overlay"></div>
     <canvas id="static-canvas"></canvas>
+    <canvas id="glitch-canvas"></canvas>
     <div class="tv-scanlines"></div>
     <div class="tv-bar"></div>
     
@@ -280,21 +296,29 @@
   </div>
 
   <script>
-    /* Canvas Static Generator */
-    const canvas = document.getElementById('static-canvas');
-    const ctx = canvas.getContext('2d');
+    /* Canvas Base Static Setup */
+    const staticCanvas = document.getElementById('static-canvas');
+    const staticCtx = staticCanvas.getContext('2d');
+
+    /* Digital Glitch Canvas Setup */
+    const glitchCanvas = document.getElementById('glitch-canvas');
+    const glitchCtx = glitchCanvas.getContext('2d');
+
+    let isGlitching = false;
 
     function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      staticCanvas.width = window.innerWidth;
+      staticCanvas.height = window.innerHeight;
+      glitchCanvas.width = window.innerWidth;
+      glitchCanvas.height = window.innerHeight;
     }
 
     function generateStatic() {
-      const w = canvas.width;
-      const h = canvas.height;
+      const w = staticCanvas.width;
+      const h = staticCanvas.height;
       if (w === 0 || h === 0) return;
       
-      const imgData = ctx.createImageData(w, h);
+      const imgData = staticCtx.createImageData(w, h);
       const buffer = new Uint32Array(imgData.data.buffer);
       const len = buffer.length;
 
@@ -304,11 +328,49 @@
         }
       }
 
-      ctx.putImageData(imgData, 0, 0);
+      staticCtx.putImageData(imgData, 0, 0);
+    }
+
+    /* Draw Image-Style Digital Pixel Block Glitches */
+    function generateDigitalGlitch() {
+      if (!isGlitching) return;
+
+      const w = glitchCanvas.width;
+      const h = glitchCanvas.height;
+      glitchCtx.clearRect(0, 0, w, h);
+
+      const colors = [
+        'rgba(0, 255, 255, 0.85)', // Cyan
+        'rgba(255, 0, 128, 0.85)', // Magenta
+        'rgba(0, 100, 255, 0.85)', // Blue
+        'rgba(180, 180, 200, 0.7)',// Silver/Grey
+        'rgba(0, 0, 0, 0.9)',      // Dark corruption block
+        'rgba(255, 255, 255, 0.8)' // Bright white
+      ];
+
+      const sliceCount = Math.floor(Math.random() * 25) + 15;
+
+      for (let i = 0; i < sliceCount; i++) {
+        const sliceY = Math.random() * h;
+        const sliceH = Math.floor(Math.random() * 18) + 4;
+        const sliceX = Math.random() * w;
+        const sliceW = Math.random() * (w * 0.7) + 50;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        glitchCtx.fillStyle = color;
+        glitchCtx.fillRect(sliceX, sliceY, sliceW, sliceH);
+
+        /* Render horizontal scan lines inside glitch blocks */
+        if (Math.random() < 0.4) {
+          glitchCtx.fillStyle = 'rgba(0,0,0,0.6)';
+          glitchCtx.fillRect(0, sliceY, w, Math.floor(Math.random() * 3) + 1);
+        }
+      }
     }
 
     function loop() {
       generateStatic();
+      generateDigitalGlitch();
       requestAnimationFrame(loop);
     }
 
@@ -316,12 +378,14 @@
     resize();
     loop();
 
-    /* 10 Seconds: Trigger Glitch Effect */
+    /* 20 Seconds: Activate Colorful Glitch Mode */
     setTimeout(() => {
+      isGlitching = true;
       document.body.classList.add('glitching');
-    }, 10000);
+      glitchCanvas.style.opacity = '0.75';
+    }, 20000);
 
-    /* 45 Seconds: Trigger Blue Screen Crash */
+    /* 45 Seconds: Cut to Crash Screen */
     setTimeout(() => {
       document.querySelector('.viewport-wrapper').style.display = 'none';
       const crashScreen = document.getElementById('crash-screen');
@@ -330,4 +394,3 @@
   </script>
 </body>
 </html>
-
