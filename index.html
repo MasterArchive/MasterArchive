@@ -48,7 +48,7 @@
       z-index: 1;
     }
 
-    /* Canvas Static Layer */
+    /* Canvas Static Layer (Upscaled Low-Res) */
     #static-canvas {
       position: absolute;
       top: 0;
@@ -58,6 +58,8 @@
       z-index: 2;
       pointer-events: none;
       opacity: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
       animation: fadeInStatic 10s ease-in-out forwards;
     }
 
@@ -132,7 +134,7 @@
     /* Main Content */
     .content {
       position: relative;
-      z-index: 6;
+      z-index: 10;
       max-width: 600px;
       padding: 20px;
       width: 100%;
@@ -183,10 +185,13 @@
       justify-content: center;
       align-items: center;
       margin-bottom: 2rem;
+      position: relative;
+      z-index: 100;
+      pointer-events: auto;
     }
     
     .key-input {
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.85);
       border: 1px solid #ffffff;
       color: #ffffff;
       font-family: monospace;
@@ -196,12 +201,16 @@
       text-align: center;
       outline: none;
       letter-spacing: 2px;
+      position: relative;
+      z-index: 101;
+      pointer-events: auto;
+      cursor: text;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     
     .key-input:focus {
       border-color: #cccccc;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
     }
 
     .key-input.error {
@@ -226,7 +235,7 @@
     
     .layer2-input:focus {
       border-color: #00ff66;
-      box-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+      box-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
     }
 
     .layer3-input {
@@ -235,12 +244,12 @@
       color: #f3f3a8;
       background: rgba(10, 10, 5, 0.85);
       position: relative;
-      z-index: 10;
+      z-index: 101;
     }
 
     .layer3-input:focus {
       border-color: #ffffcc;
-      box-shadow: 0 0 10px rgba(243, 243, 168, 0.4);
+      box-shadow: 0 0 12px rgba(243, 243, 168, 0.6);
     }
 
     p.subtext {
@@ -281,7 +290,6 @@
       margin-bottom: 1.5rem;
     }
 
-    /* Matrix Data Stream Line for Stage 1 */
     .matrix-line {
       font-size: 1rem;
       letter-spacing: 4px;
@@ -429,9 +437,6 @@
 </head>
 <body>
 
-  <!-- Canvas pattern generator -->
-  <canvas id="text-static-canvas" width="128" height="128" style="display:none;"></canvas>
-
   <!-- Main Viewport -->
   <div class="viewport-wrapper">
     <div class="background-overlay"></div>
@@ -473,7 +478,7 @@
     <canvas id="tunnel-canvas"></canvas>
     <h2>LAYER 2 COMPLETED</h2>
     
-    <div class="input-container" style="position: relative; z-index: 10;">
+    <div class="input-container">
       <input type="text" id="layer3-input" class="key-input layer3-input" placeholder="ENTER LAYER 3 KEY..." autocomplete="off" spellcheck="false" />
     </div>
   </div>
@@ -497,9 +502,6 @@
     const glitchCanvas = document.getElementById('glitch-canvas');
     const glitchCtx = glitchCanvas.getContext('2d');
 
-    const textStaticCanvas = document.getElementById('text-static-canvas');
-    const textStaticCtx = textStaticCanvas.getContext('2d');
-
     const tunnelCanvas = document.getElementById('tunnel-canvas');
     const tunnelCtx = tunnelCanvas.getContext('2d');
 
@@ -513,10 +515,18 @@
     const matrixLine = document.getElementById('matrix-line');
 
     let isGlitching = false;
-    let isHoveringHeading = false;
     let crashTimer = null;
     let tunnelAnimId = null;
     let frameCounter = 0;
+
+    /* Initialize Low-Resolution Static Canvas Buffer */
+    const STATIC_W = 320;
+    const STATIC_H = 240;
+    staticCanvas.width = STATIC_W;
+    staticCanvas.height = STATIC_H;
+
+    const staticImgData = staticCtx.createImageData(STATIC_W, STATIC_H);
+    const staticBuffer = new Uint32Array(staticImgData.data.buffer);
 
     /* --- MATRIX CODE STREAM GENERATOR --- */
     const matrixChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+-/<>[]={}';
@@ -529,15 +539,7 @@
       }
       matrixLine.textContent = line;
     }
-    setInterval(updateMatrixLine, 60);
-
-    function triggerCrash() {
-      if (crashTimer) clearTimeout(crashTimer);
-      document.querySelector('.viewport-wrapper').style.display = 'none';
-      successScreen.style.display = 'none';
-      successScreenLayer2.style.display = 'none';
-      crashScreen.style.display = 'flex';
-    }
+    setInterval(updateMatrixLine, 80);
 
     function indicateError(inputElem) {
       inputElem.classList.add('error');
@@ -546,18 +548,30 @@
       }, 500);
     }
 
-    titleHeading.addEventListener('mouseenter', () => isHoveringHeading = true);
-    titleHeading.addEventListener('mouseleave', () => isHoveringHeading = false);
+    /* Auto Focus & Recovery */
+    function focusActiveInput() {
+      if (getComputedStyle(successScreenLayer2).display === 'flex') {
+        layer3Input.focus();
+      } else if (getComputedStyle(successScreen).display === 'flex') {
+        layer2Input.focus();
+      } else if (getComputedStyle(crashScreen).display !== 'flex') {
+        keyInput.focus();
+      }
+    }
+
+    document.body.addEventListener('click', () => focusActiveInput());
+    window.addEventListener('load', () => setTimeout(focusActiveInput, 100));
 
     /* Layer 1 Input Listener */
     keyInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         const value = keyInput.value.trim().toLowerCase();
         if (value === 'dodecahedron') {
           if (crashTimer) clearTimeout(crashTimer);
           document.querySelector('.viewport-wrapper').style.display = 'none';
           successScreen.style.display = 'flex';
-          setTimeout(() => layer2Input.focus(), 100);
+          setTimeout(() => layer2Input.focus(), 50);
         } else {
           indicateError(keyInput);
         }
@@ -567,12 +581,13 @@
     /* Layer 2 Input Listener */
     layer2Input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         const value = layer2Input.value.trim().toLowerCase();
         if (value === 'shadow') {
           successScreen.style.display = 'none';
           successScreenLayer2.style.display = 'flex';
           startTunnelAnimation();
-          setTimeout(() => layer3Input.focus(), 100);
+          setTimeout(() => layer3Input.focus(), 50);
         } else {
           indicateError(layer2Input);
         }
@@ -582,57 +597,29 @@
     /* Layer 3 Input Listener */
     layer3Input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         layer3Input.value = '';
         layer3Input.placeholder = 'NO PASSWORD REQUIRED';
       }
     });
 
     function resize() {
-      staticCanvas.width = window.innerWidth;
-      staticCanvas.height = window.innerHeight;
       glitchCanvas.width = window.innerWidth;
       glitchCanvas.height = window.innerHeight;
       tunnelCanvas.width = window.innerWidth;
       tunnelCanvas.height = window.innerHeight;
     }
 
+    /* Ultra-Fast Optimized Static Generator */
     function generateStatic() {
-      const w = staticCanvas.width;
-      const h = staticCanvas.height;
-      if (w === 0 || h === 0) return;
-      
-      const imgData = staticCtx.createImageData(w, h);
-      const buffer = new Uint32Array(imgData.data.buffer);
-      const len = buffer.length;
+      if (frameCounter % 2 !== 0) return;
+      const len = staticBuffer.length;
 
       for (let i = 0; i < len; i++) {
-        if (Math.random() < 0.5) {
-          buffer[i] = 0xffffffff;
-        }
+        staticBuffer[i] = Math.random() < 0.5 ? 0xffffffff : 0x00000000;
       }
 
-      staticCtx.putImageData(imgData, 0, 0);
-    }
-
-    function animateTextStatic() {
-      // Throttle texture updates to prevent performance drop
-      if (frameCounter % 3 !== 0) return;
-
-      const imgData = textStaticCtx.createImageData(128, 128);
-      const data = imgData.data;
-      const noiseThreshold = isHoveringHeading ? 0.8 : 0.5;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const val = Math.random() < noiseThreshold ? 255 : (isHoveringHeading ? 50 : 120);
-        data[i]     = 255; 
-        data[i + 1] = 255; 
-        data[i + 2] = val; 
-        data[i + 3] = 255;
-      }
-
-      textStaticCtx.putImageData(imgData, 0, 0);
-      const dataUrl = textStaticCanvas.toDataURL();
-      titleHeading.style.backgroundImage = `url(${dataUrl})`;
+      staticCtx.putImageData(staticImgData, 0, 0);
     }
 
     function generateFullscreenGlitch() {
@@ -651,22 +638,18 @@
         'rgba(255, 255, 255, 0.8)' 
       ];
 
-      const sliceHeight = 4;
+      const sliceHeight = 6;
       const rows = Math.ceil(h / sliceHeight);
 
       for (let r = 0; r < rows; r++) {
-        if (Math.random() < 0.65) {
+        if (Math.random() < 0.3) {
           const y = r * sliceHeight;
-          const blockCount = Math.floor(Math.random() * 4) + 1;
+          const x = Math.random() * w;
+          const blockWidth = Math.random() * (w * 0.4) + 40;
+          const color = colors[Math.floor(Math.random() * colors.length)];
 
-          for (let b = 0; b < blockCount; b++) {
-            const x = Math.random() * w;
-            const blockWidth = Math.random() * (w * 0.5) + 40;
-            const color = colors[Math.floor(Math.random() * colors.length)];
-
-            glitchCtx.fillStyle = color;
-            glitchCtx.fillRect(x, y, blockWidth, sliceHeight);
-          }
+          glitchCtx.fillStyle = color;
+          glitchCtx.fillRect(x, y, blockWidth, sliceHeight);
         }
       }
     }
@@ -711,3 +694,25 @@
         tunnelCtx.beginPath();
         tunnelCtx.arc(cx, cy, Math.max(w, h) * 0.35, 0, Math.PI * 2);
         tunnelCtx.fill();
+
+        const horizGlow = tunnelCtx.createLinearGradient(0, cy, w, cy);
+        horizGlow.addColorStop(0, 'rgba(0,0,0,0)');
+        horizGlow.addColorStop(0.35, 'rgba(240, 235, 170, 0.15)');
+        horizGlow.addColorStop(0.5, 'rgba(255, 255, 230, 0.7)');
+        horizGlow.addColorStop(0.65, 'rgba(240, 235, 170, 0.15)');
+        horizGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        
+        tunnelCtx.fillStyle = horizGlow;
+        tunnelCtx.fillRect(0, cy - 8, w, 16);
+
+        const numRings = 24;
+        const ringSpacing = 0.8;
+        const zMin = 0.6;
+        const zMax = zMin + numRings * ringSpacing;
+
+        const gridCols = 12;
+        const xMin = -4.5;
+        const xMax = 4.5;
+        const xStep = (xMax - xMin) / gridCols;
+
+  
