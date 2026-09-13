@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter_key</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: monospace;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background Logo Overlay */
+    .background-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('12669.png') no-repeat center center;
+      background-size: contain;
+      opacity: 0.40;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Canvas Static Layer */
+    #static-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.35;
+      image-rendering: pixelated;
+    }
+
+    /* Fullscreen Digital Glitch Layer */
+    #glitch-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+      transition: opacity 0.4s ease;
+    }
+
+    /* Horizontal TV Scanlines Layer */
+    .tv-scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+      pointer-events: none;
+      opacity: 0.8;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0.6)
+      );
+      background-size: 100% 4px;
+    }
+
+    /* Moving Horizontal Distortion Bar */
+    .tv-bar {
+      position: fixed;
+      top: -20%;
+      left: 0;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      z-index: 5;
+      pointer-events: none;
+      animation: scanBar 8s linear infinite;
+    }
+
+    @keyframes scanBar {
+      0% { top: -20%; }
+      100% { top: 120%; }
+    }
+
+    /* Viewport Wrapper */
+    .viewport-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    /* Main Content */
+    .content {
+      position: relative;
+      z-index: 20;
+      max-width: 600px;
+      padding: 20px;
+      width: 100%;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      letter-spacing: 4px;
+      margin-bottom: 2rem;
+      font-weight: bold;
+      position: relative;
+      font-style: italic;
+      color: transparent;
+      background: repeating-radial-gradient(circle at 50% 50%, #ffffa0 0%, #333 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      opacity: 0.8;
+      filter: drop-shadow(0px 0px 3px rgba(0, 0, 0, 0.95)) drop-shadow(0px 2px 5px #000000);
+      display: inline-block;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.2s ease, filter 0.2s ease, transform 0.1s ease;
+    }
+
+    h1:hover, h1:active {
+      opacity: 1;
+      filter: drop-shadow(0px 0px 8px rgba(255, 255, 160, 0.8)) drop-shadow(0px 0px 15px rgba(255, 0, 85, 0.6));
+      animation: headingStaticGlitch 0.15s infinite alternate;
+    }
+
+    @keyframes headingStaticGlitch {
+      0% { transform: skewX(0deg) translate(0, 0); }
+      20% { transform: skewX(12deg) translate(-3px, 1px); }
+      40% { transform: skewX(-8deg) translate(3px, -1px); }
+      60% { transform: skewX(4deg) translate(-1px, 2px); }
+      80% { transform: skewX(-10deg) translate(2px, -2px); }
+      100% { transform: skewX(0deg) translate(0, 0); }
+    }
+
+    p.hint {
+      font-size: 0.95rem;
+      color: #cccccc;
+      margin-bottom: 2rem;
+    }
+    
+    .input-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 100;
+    }
+    
+    .key-input {
+      background: rgba(0, 0, 0, 0.9);
+      border: 1px solid #ffffff;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 10px 15px;
+      width: 280px;
+      text-align: center;
+      outline: none;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 101;
+      cursor: text;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .key-input:focus {
+      border-color: #cccccc;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+    }
+
+    .key-input.error {
+      border-color: #ff3333 !important;
+      box-shadow: 0 0 12px rgba(255, 51, 51, 0.8) !important;
+      animation: errorShake 0.3s ease-in-out;
+    }
+
+    .error-msg {
+      color: #ff3333;
+      font-size: 0.8rem;
+      min-height: 1.2rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: 1px;
+      font-weight: bold;
+    }
+
+    @keyframes errorShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    .layer2-input {
+      margin-top: 1rem;
+      border-color: #00ff66;
+      color: #00ff66;
+    }
+    
+    .layer2-input:focus {
+      border-color: #00ff66;
+      box-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
+    }
+
+    .layer3-input {
+      margin-top: 2.5rem;
+      border-color: #f3f3a8;
+      color: #f3f3a8;
+      background: rgba(10, 10, 5, 0.85);
+      position: relative;
+      z-index: 101;
+    }
+
+    .layer3-input:focus {
+      border-color: #ffffcc;
+      box-shadow: 0 0 12px rgba(243, 243, 168, 0.6);
+    }
+
+    p.subtext {
+      font-size: 0.75rem;
+      color: #666666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 1rem;
+    }
+
+    /* --- OVERLAY SCREENS --- */
+    .overlay-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(5, 5, 5, 0.92);
+      color: #00ff66;
+      font-family: monospace;
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .overlay-screen h2 {
+      font-size: 2rem;
+      letter-spacing: 4px;
+      color: #00ff66;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.6);
+      border: 2px solid #00ff66;
+      padding: 12px 25px;
+      background: rgba(0, 20, 0, 0.85);
+      box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+      margin-bottom: 1.5rem;
+      max-width: 90%;
+    }
+
+    /* --- BUTTON STYLES --- */
+    .terminal-btn, .back-btn, .terminal-submit-btn {
+      background: rgba(0, 25, 0, 0.85);
+      border: 1px solid #00ff66;
+      color: #00ff66;
+      font-family: monospace;
+      font-size: 0.95rem;
+      padding: 10px 20px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
+    }
+
+    .terminal-btn:hover, .back-btn:hover, .terminal-submit-btn:hover {
+      background: #00ff66;
+      color: #000000;
+      box-shadow: 0 0 15px rgba(0, 255, 102, 0.8);
+      font-weight: bold;
+    }
+
+    .stage1-actions {
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .matrix-line {
+      font-size: 1rem;
+      letter-spacing: 4px;
+      color: #00ff66;
+      text-shadow: 0 0 8px rgba(0, 255, 102, 0.8), 0 0 15px rgba(0, 255, 102, 0.4);
+      margin-bottom: 1.5rem;
+      user-select: none;
+      font-weight: bold;
+    }
+
+    .secret-corner-message {
+      position: absolute;
+      bottom: 12px;
+      right: 15px;
+      color: rgb(1, 1, 1);
+      font-size: 0.7rem;
+      line-height: 1.4;
+      text-align: right;
+      pointer-events: auto;
+      user-select: text;
+    }
+
+    /* --- TERMINAL CONSOLE --- */
+    #terminal-screen {
+      z-index: 10005;
+    }
+
+    .terminal-container {
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .terminal-output {
+      width: 100%;
+      height: 260px;
+      background: rgba(0, 15, 0, 0.92);
+      border: 1px solid #00ff66;
+      box-shadow: inset 0 0 10px rgba(0, 255, 102, 0.2);
+      padding: 15px;
+      text-align: left;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .terminal-output p {
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+
+    .terminal-output .cmd-log {
+      color: #aaffaa;
+    }
+
+    .terminal-output .sys-log {
+      color: #00ff66;
+    }
+
+    .terminal-output .err-log {
+      color: #ff5555;
+    }
+
+    .terminal-input-row {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .terminal-prompt {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #00ff66;
+    }
+
+    .terminal-input {
+      flex: 1;
+      background: rgba(0, 10, 0, 0.9);
+      border: 1px solid #00ff66;
+      color: #00ff66;
+      font-family: monospace;
+      font-size: 0.95rem;
+      padding: 10px;
+      outline: none;
+      letter-spacing: 1px;
+    }
+
+    .terminal-input:focus {
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+    }
+
+    .nav-footer {
+      margin-top: 1.5rem;
+    }
+
+
+    /* --- HIDDEN P-93 DISTRIBUTOR MENU --- */
+    #p93-screen {
+      z-index: 10006;
+      background:
+        radial-gradient(circle at center, rgba(0, 40, 20, 0.16), rgba(0, 0, 0, 0.97) 68%),
+        #000;
+    }
+
+    .p93-panel {
+      width: min(92vw, 620px);
+      border: 1px solid rgba(0, 255, 102, 0.65);
+      background: rgba(0, 12, 7, 0.90);
+      box-shadow:
+        0 0 18px rgba(0,255,102,0.18),
+        inset 0 0 24px rgba(0,255,102,0.06);
+      padding: clamp(22px, 5vw, 38px);
+      box-sizing: border-box;
+    }
+
+    .p93-title {
+      margin: 0 0 8px;
+      color: #00ff66;
+      font-size: clamp(1.25rem, 4vw, 1.9rem);
+      letter-spacing: clamp(3px, 1vw, 7px);
+      text-shadow: 0 0 10px rgba(0,255,102,0.65);
+    }
+
+    .p93-subtitle {
+      margin: 0 0 28px;
+      color: #6fae83;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+    }
+
+    .p93-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(70px, 1fr));
+      gap: clamp(18px, 5vw, 34px);
+      max-width: 420px;
+      margin: 0 auto 30px;
+      place-items: center;
+    }
+
+    .p93-node {
+      width: clamp(68px, 17vw, 92px);
+      height: clamp(68px, 17vw, 92px);
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #00ff66;
+      background: rgba(0,0,0,0.86);
+      font-family: monospace;
+      font-size: clamp(1.15rem, 4vw, 1.65rem);
+      font-weight: bold;
+      box-shadow: 0 0 10px currentColor, inset 0 0 16px currentColor;
+      text-shadow: 0 0 8px currentColor;
+      transition: color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .p93-node::before {
+      content: "";
+      position: absolute;
+      width: 28%;
+      height: 28%;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.28;
+      filter: blur(5px);
+      animation: p93CorePulse 1.8s ease-in-out infinite;
+    }
+
+    .p93-node span {
+      position: relative;
+      z-index: 2;
+    }
+
+    .p93-node.flicker {
+      animation: p93Flicker 0.42s steps(2, end) infinite;
+    }
+
+    .p93-node.red {
+      color: #ff3030;
+    }
+
+    .p93-node.orange {
+      color: #ff9d22;
+    }
+
+    .p93-status {
+      min-height: 18px;
+      margin-bottom: 22px;
+      color: #789b84;
+      font-size: 0.68rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .p93-return {
+      min-width: 190px;
+    }
+
+    @keyframes p93CorePulse {
+      0%, 100% { transform: scale(0.7); opacity: 0.18; }
+      50% { transform: scale(1.25); opacity: 0.42; }
+    }
+
+    @keyframes p93Flicker {
+      0%, 15%, 19%, 24%, 70%, 100% { opacity: 1; }
+      16%, 20%, 23%, 71% { opacity: 0.28; }
+      72% { opacity: 0.65; }
+    }
+
+    /* Keep the Layer 2 entry controls centered as one horizontal unit. */
+    #success-screen .password-form {
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+      justify-content: center;
+    }
+
+    #success-screen-layer2 .layer3-form {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      width: fit-content !important;
+      max-width: calc(100vw - 24px);
+      margin-left: auto !important;
+      margin-right: auto !important;
+      justify-content: center !important;
+    }
+
+    #success-screen-layer2 .layer3-submit {
+      margin-left: 0 !important;
+    }
+
+    @media (max-width: 430px) {
+      #success-screen-layer2 .layer3-form {
+        gap: 7px;
+      }
+
+      #success-screen-layer2 .layer3-input {
+        width: min(210px, calc(100vw - 125px));
+      }
+
+      #success-screen-layer2 .layer3-submit {
+        min-width: 86px;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+
+    /* --- ARCHIVE PLACEHOLDERS --- */
+    .archive-box {
+      border: 1px dashed #00ff66;
+      padding: 25px;
+      background: rgba(0, 20, 0, 0.7);
+      max-width: 550px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+
+    .placeholder-text {
+      color: #88ff88;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    /* --- VISIBLE SUBMIT BUTTONS --- */
+    .password-form {
+      gap: 10px;
+      flex-wrap: nowrap;
+    }
+
+    .password-submit-btn {
+      background: rgba(10, 10, 5, 0.92);
+      border: 1px solid #ffffff;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 0.9rem;
+      font-weight: bold;
+      padding: 10px 18px;
+      min-width: 92px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: 0.2s ease;
+      box-shadow: 0 0 8px rgba(255,255,255,0.2);
+    }
+
+    .password-submit-btn:hover,
+    .password-submit-btn:focus {
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 0 18px rgba(255,255,255,0.75);
+      outline: none;
+    }
+
+    .layer2-input + .password-submit-btn {
+      border-color: #00ff66;
+      color: #00ff66;
+      box-shadow: 0 0 8px rgba(0,255,102,0.2);
+    }
+
+    .layer2-input + .password-submit-btn:hover,
+    .layer2-input + .password-submit-btn:focus {
+      background: #00ff66;
+      color: #000000;
+      box-shadow: 0 0 18px rgba(0,255,102,0.75);
+    }
+
+    /* --- STAGE 2 OVERLAY (PERSPECTIVE TUNNEL) --- */
+    #success-screen-layer2 {
+      display: none;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 220, 0, 0.28) 0%, rgba(255, 190, 0, 0.10) 16%, rgba(0,0,0,0.96) 52%),
+        #000000;
+      font-family: monospace;
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    #success-screen-layer2::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,120,0.04) 0,
+          rgba(255,255,120,0.04) 1px,
+          transparent 1px,
+          transparent 5px
+        );
+      mix-blend-mode: screen;
+    }
+
+    #tunnel-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #success-screen-layer2 h2 {
+      position: relative;
+      z-index: 10;
+      font-size: clamp(1.35rem, 3.1vw, 2.6rem);
+      letter-spacing: clamp(4px, 0.8vw, 9px);
+      color: #ffff73;
+      text-transform: uppercase;
+      font-weight: bold;
+      border: 2px solid #ffff73;
+      padding: 18px 30px;
+      background: rgba(8, 8, 0, 0.88);
+      box-shadow:
+        0 0 8px rgba(255,235,0,0.85),
+        0 0 28px rgba(255,200,0,0.45),
+        inset 0 0 18px rgba(255,220,0,0.12);
+      text-shadow: 0 0 8px rgba(255,255,80,0.95);
+      margin-bottom: 1.8rem;
+    }
+
+    #success-screen-layer2 .layer3-form {
+      position: relative;
+      z-index: 11;
+      margin: 0.4rem auto 0;
+      width: min(100%, 390px);
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    #success-screen-layer2 .layer3-input {
+      width: 210px;
+      box-sizing: border-box;
+      flex: 0 1 auto;
+    }
+
+    #success-screen-layer2 .layer3-submit {
+      flex: 0 0 auto;
+    }
+
+    #success-screen-layer2 .layer3-input {
+      border-color: #ffff73;
+      color: #ffff73;
+      background: rgba(5,5,0,0.92);
+      box-shadow: 0 0 8px rgba(255,230,0,0.18);
+    }
+
+    #success-screen-layer2 .layer3-submit {
+      border-color: #ffff73;
+      color: #ffff73;
+      background: rgba(8,8,0,0.92);
+    }
+
+    #success-screen-layer2 .layer3-submit:hover,
+    #success-screen-layer2 .layer3-submit:focus {
+      background: #ffff73;
+      color: #000000;
+      box-shadow: 0 0 18px rgba(255,240,0,0.85);
+    }
+
+    #success-screen-layer2 .error-msg {
+      position: relative;
+      z-index: 12;
+      margin-top: 0.2rem;
+    }
+
+    @media (max-width: 560px) {
+      .password-form {
+        flex-direction: column;
+      }
+
+      .password-submit-btn {
+        width: 280px;
+      }
+
+      #success-screen-layer2 h2 {
+        padding: 14px 18px;
+      }
+    }
+
+    /* --- GLITCH ANIMATIONS --- */
+    .glitching .viewport-wrapper {
+      animation: screenShake 0.25s infinite alternate;
+    }
+
+    .glitching h1:not(:hover) {
+      animation: textJitter 0.15s infinite;
+    }
+
+    .glitching .key-input {
+      animation: borderFlicker 0.1s infinite;
+    }
+
+    @keyframes screenShake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-5px, 3px); }
+      40% { transform: translate(4px, -2px); }
+      60% { transform: translate(-3px, -3px); }
+      80% { transform: translate(5px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes textJitter {
+      0% { transform: skew(0deg); }
+      20% { transform: skew(8deg) translate(-4px, 2px); }
+      40% { transform: skew(-6deg) translate(4px, -2px); }
+      60% { transform: skew(0deg); }
+      80% { transform: skew(10deg); }
+      100% { transform: skew(0deg); }
+    }
+
+    @keyframes borderFlicker {
+      0% { border-color: #ffffff; box-shadow: none; }
+      50% { border-color: #ff0055; box-shadow: -4px 0 #00ffff; }
+      100% { border-color: #ffffff; box-shadow: none; }
+    }
+
+    /* --- FAKE SYSTEM CRASH --- */
+    #crash-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #0000aa;
+      color: #ffffff;
+      font-family: monospace;
+      z-index: 99999;
+      padding: 40px;
+      text-align: left;
+      flex-direction: column;
+      user-select: none;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    #crash-screen h2 {
+      background-color: #aaaaaa;
+      color: #0000aa;
+      padding: 2px 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 25px;
+    }
+
+    #crash-screen p {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .crash-details {
+      margin-top: 30px;
+      color: #ffff55;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- GLOBAL CRT BACKGROUND & OVERLAYS -->
+  <div class="background-overlay"></div>
+  <canvas id="static-canvas"></canvas>
+  <canvas id="glitch-canvas"></canvas>
+  <div class="tv-scanlines"></div>
+  <div class="tv-bar"></div>
+
+  <!-- STAGE 1 MAIN VIEWPORT -->
+  <div class="viewport-wrapper" id="layer1-view">
+    <div class="content">
+      <h1 id="title-heading">Enter_key</h1>
+      <p class="hint">The first door is always the easiest.</p>
+      
+      <form id="form-layer1" class="input-container password-form">
+        <input type="text" id="key-input" class="key-input" placeholder="ENTER KEY..." autofocus autocomplete="off" spellcheck="false" />
+        <button type="submit" class="password-submit-btn">SUBMIT</button>
+      </form>
+      <div id="error-layer1" class="error-msg"></div>
+
+      <p class="subtext">Sometimes, something is closer than it appears.</p>
+    </div>
+  </div>
+
+  <!-- STAGE 1 COMPLETED OVERLAY -->
+  <div id="success-screen" class="overlay-screen">
+    <h2>LAYER 1 COMPLETED</h2>
+    
+    <div id="matrix-line" class="matrix-line"></div>
+
+    <div class="stage1-actions">
+      <button type="button" id="terminal-console-btn" class="terminal-btn">&gt; TERMINAL CONSOLE &lt;</button>
+    </div>
+
+    <form id="form-layer2" class="input-container password-form">
+      <input type="text" id="layer2-input" class="key-input layer2-input" placeholder="ENTER LAYER 2 KEY..." autocomplete="off" spellcheck="false" />
+      <button type="submit" class="password-submit-btn">SUBMIT</button>
+    </form>
+    <div id="error-layer2" class="error-msg"></div>
+
+    <div class="secret-corner-message">
+      K uvca cyca htqo oqtpkpi nkijv,<br>
+      Cpf eqog cnkxg kp fggr qh pkijv.
+    </div>
+  </div>
+
+  <!-- TERMINAL CONSOLE SCREEN -->
+  <div id="terminal-screen" class="overlay-screen">
+    <h2>TERMINAL CONSOLE v1.0</h2>
+    
+    <div class="terminal-container">
+      <div id="terminal-output" class="terminal-output">
+        <p class="sys-log">SYSTEM INITIALIZED. SECURITY CLEARANCE: LEVEL 1.</p>
+        <p class="sys-log">Type "//Help" FOR AVAILABLE COMMANDS.</p>
+      </div>
+
+      <form id="form-terminal" class="terminal-input-row">
+        <span class="terminal-prompt">&gt;</span>
+        <input type="text" id="terminal-input" class="terminal-input" placeholder="Enter command..." autocomplete="off" spellcheck="false" />
+        <button type="submit" class="terminal-submit-btn">EXECUTE</button>
+      </form>
+    </div>
+
+    <div class="nav-footer">
+      <button type="button" id="terminal-back-btn" class="back-btn">&lt; BACK TO STAGE 1</button>
+    </div>
+  </div>
+
+
+  <!-- HIDDEN P-93 DISTRIBUTOR SCREEN -->
+  <div id="p93-screen" class="overlay-screen">
+    <div class="p93-panel">
+      <h2 class="p93-title">P-93 DISTRIBUTOR</h2>
+      <p class="p93-subtitle">CLASSIFIED NODE ARRAY // MANUAL OBSERVATION ONLY</p>
+
+      <div class="p93-grid" aria-label="P-93 six-node distributor">
+        <div class="p93-node" data-node="1"><span>1</span></div>
+        <div class="p93-node red" data-node="2"><span>2</span></div>
+        <div class="p93-node" data-node="3"><span>3</span></div>
+        <div class="p93-node" data-node="4"><span>4</span></div>
+        <div class="p93-node orange" data-node="5"><span>5</span></div>
+        <div class="p93-node" data-node="6"><span>6</span></div>
+      </div>
+
+      <div id="p93-status" class="p93-status">ARRAY ONLINE // 2 RED // 5 ORANGE</div>
+
+      <button type="button" id="p93-return-btn" class="back-btn p93-return">&lt; RETURN TO TERMINAL</button>
+    </div>
+  </div>
+
+  <!-- UNRESTRICTED ARCHIVE SCREEN -->
+  <div id="unrestricted-archive-screen" class="overlay-screen">
+    <h2>UNRESTRICTED ARCHIVE</h2>
+    <div class="archive-box">
+      <p class="placeholder-text">[ UNRESTRICTED ARCHIVE INITIALIZED ]</p>
+      <p class="subtext">No data entries loaded. Placeholder module ready for future development.</p>
+    </div>
+    <button type="button" id="ua-back-btn" class="back-btn">&lt; BACK TO TERMINAL</button>
+  </div>
+
+  <!-- RESTRICTED ARCHIVE PASSWORD SCREEN -->
+  <div id="ra-password-screen" class="overlay-screen">
+    <h2>RESTRICTED ARCHIVE - CLEARANCE REQUIRED</h2>
+    <p class="hint">Enter Master Clearance Access Key:</p>
+    
+    <form id="form-ra-password" class="input-container password-form">
+      <input type="password" id="ra-password-input" class="key-input layer2-input" placeholder="ENTER PASSWORD..." autocomplete="off" spellcheck="false" />
+      <button type="submit" class="password-submit-btn">SUBMIT</button>
+    </form>
+    <div id="error-ra-password" class="error-msg"></div>
+
+    <div class="nav-footer">
+      <button type="button" id="ra-pass-back-btn" class="back-btn">&lt; BACK TO TERMINAL</button>
+    </div>
+  </div>
+
+  <!-- RESTRICTED ARCHIVE SCREEN -->
+  <div id="restricted-archive-screen" class="overlay-screen">
+    <h2>RESTRICTED ARCHIVE - LEVEL 5 ACCESS GRANTED</h2>
+    <div class="archive-box">
+      <p class="placeholder-text">[ CLASSIFIED ARCHIVE DATA SECURED ]</p>
+      <p class="subtext">Restricted archives unlocked. Placeholder module ready for future development.</p>
+    </div>
+    <button type="button" id="ra-back-btn" class="back-btn">&lt; BACK TO TERMINAL</button>
+  </div>
+
+  <!-- STAGE 2 COMPLETED OVERLAY (TUNNEL) -->
+  <div id="success-screen-layer2">
+    <canvas id="tunnel-canvas"></canvas>
+    <h2>LAYER 2 COMPLETED</h2>
+    
+    <form id="form-layer3" class="input-container password-form layer3-form">
+      <input type="text" id="layer3-input" class="key-input layer3-input" placeholder="ENTER LAYER 3 KEY..." autocomplete="off" spellcheck="false" />
+      <button type="submit" class="password-submit-btn layer3-submit">SUBMIT</button>
+    </form>
+    <div id="error-layer3" class="error-msg"></div>
+  </div>
+
+  <!-- FAKE CRASH SCREEN -->
+  <div id="crash-screen">
+    <h2>CONNECTION TERMINATED</h2>
+    <p>CONNECTION TERMINATED</p>
+    <p class="crash-details">ERROR 311</p>
+    <p class="crash-details">INVALID PASSWORD / SECURITY PROTOCOL TRIGGERED</p>
+    <br>
+    <p>PLEASE REFRESH PAGE.</p>
+  </div>
+
+  <script>
+    /* DOM Elements */
+    const staticCanvas = document.getElementById('static-canvas');
+    const staticCtx = staticCanvas.getContext('2d');
+
+    const glitchCanvas = document.getElementById('glitch-canvas');
+    const glitchCtx = glitchCanvas.getContext('2d');
+
+    const tunnelCanvas = document.getElementById('tunnel-canvas');
+    const tunnelCtx = tunnelCanvas.getContext('2d');
+
+    const keyInput = document.getElementById('key-input');
+    const layer2Input = document.getElementById('layer2-input');
+    const layer3Input = document.getElementById('layer3-input');
+    const successScreen = document.getElementById('success-screen');
+    const successScreenLayer2 = document.getElementById('success-screen-layer2');
+    const matrixLine = document.getElementById('matrix-line');
+
+    const terminalConsoleBtn = document.getElementById('terminal-console-btn');
+    const terminalScreen = document.getElementById('terminal-screen');
+    const terminalBackBtn = document.getElementById('terminal-back-btn');
+    const formTerminal = document.getElementById('form-terminal');
+    const terminalInput = document.getElementById('terminal-input');
+    const terminalOutput = document.getElementById('terminal-output');
+
+    const p93Screen = document.getElementById('p93-screen');
+    const p93ReturnBtn = document.getElementById('p93-return-btn');
+    const p93Nodes = Array.from(document.querySelectorAll('#p93-screen .p93-node'));
+    const p93Status = document.getElementById('p93-status');
+
+    const unrestrictedArchiveScreen = document.getElementById('unrestricted-archive-screen');
+    const uaBackBtn = document.getElementById('ua-back-btn');
+
+    const raPasswordScreen = document.getElementById('ra-password-screen');
+    const formRaPassword = document.getElementById('form-ra-password');
+    const raPasswordInput = document.getElementById('ra-password-input');
+    const raPassBackBtn = document.getElementById('ra-pass-back-btn');
+
+    const restrictedArchiveScreen = document.getElementById('restricted-archive-screen');
+    const raBackBtn = document.getElementById('ra-back-btn');
+
+    const layer1View = document.getElementById('layer1-view');
+    const crashScreen = document.getElementById('crash-screen');
+
+    /* Puzzle state */
+    const state = {
+      layer1Complete: false,
+      layer2Complete: false,
+      restrictedArchiveUnlocked: false,
+      crashTriggered: false
+    };
+
+    const LAYER1_KEY = 'dodecahedron';
+    const LAYER2_KEY = 'shadow';
+
+    function normalize(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function showOverlay(el) {
+      el.style.display = 'flex';
+    }
+
+    function hideOverlay(el) {
+      el.style.display = 'none';
+    }
+
+    function setError(input, errorEl, message) {
+      errorEl.textContent = message;
+      input.classList.add('error');
+      setTimeout(() => input.classList.remove('error'), 350);
+    }
+
+    function clearError(errorEl) {
+      errorEl.textContent = '';
+    }
+
+    function focusInput(input) {
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 50);
+    }
+
+    /* ---------------- Stage 1 ---------------- */
+
+    document.getElementById('form-layer1').addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      if (normalize(keyInput.value) !== LAYER1_KEY) {
+        triggerCrash();
+        return;
+      }
+
+      state.layer1Complete = true;
+      clearError(document.getElementById('error-layer1'));
+
+      layer1View.style.display = 'none';
+      matrixLine.textContent = 'ACCESS VECTOR ACCEPTED // 01 → 02';
+      document.body.classList.add('glitching');
+
+      showOverlay(successScreen);
+      focusInput(layer2Input);
+
+      setTimeout(() => document.body.classList.remove('glitching'), 1400);
+    });
+
+    /* ---------------- Stage 1 terminal ---------------- */
+
+    terminalConsoleBtn.addEventListener('click', () => {
+      if (!state.layer1Complete) return;
+
+      hideOverlay(successScreen);
+      showOverlay(terminalScreen);
+      terminalInput.value = '';
+      focusInput(terminalInput);
+    });
+
+    terminalBackBtn.addEventListener('click', () => {
+      hideOverlay(terminalScreen);
+      showOverlay(successScreen);
+      focusInput(layer2Input);
+    });
+
+    function terminalPrint(text, className = 'sys-log') {
+      const p = document.createElement('p');
+      p.className = className;
+      p.textContent = text;
+      terminalOutput.appendChild(p);
+      terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+
+    const terminalCommands = {
+      '//help': () => [
+        ['AVAILABLE COMMANDS:', 'sys-log'],
+        ['//help     - show this command list', 'sys-log'],
+        ['//status   - display puzzle status', 'sys-log'],
+        ['//archive  - open unrestricted archive', 'sys-log'],
+        ['//restricted - request restricted archive clearance', 'sys-log'],
+        ['//clear    - clear terminal output', 'sys-log'],
+        ['//exit     - return to Layer 1', 'sys-log']
+      ],
+      '//p-93': () => {
+        openP93();
+        return [];
+      },
+      '//status': () => [
+        [`LAYER 1: ${state.layer1Complete ? 'COMPLETE' : 'LOCKED'}`, 'sys-log'],
+        [`LAYER 2: ${state.layer2Complete ? 'COMPLETE' : 'LOCKED'}`, 'sys-log'],
+        [`RESTRICTED ARCHIVE: ${state.restrictedArchiveUnlocked ? 'UNLOCKED' : 'LOCKED'}`, 'sys-log']
+      ],
+      '//archive': () => {
+        hideOverlay(terminalScreen);
+        showOverlay(unrestrictedArchiveScreen);
+        return [];
+      },
+      '//restricted': () => {
+        hideOverlay(terminalScreen);
+        showOverlay(raPasswordScreen);
+        focusInput(raPasswordInput);
+        return [];
+      },
+      '//clear': () => {
+        terminalOutput.innerHTML = '';
+        return [];
+      },
+      '//exit': () => {
+        hideOverlay(terminalScreen);
+        showOverlay(successScreen);
+        focusInput(layer2Input);
+        return [];
+      }
+    };
+
+    formTerminal.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const raw = terminalInput.value.trim();
+      if (!raw) return;
+
+      terminalPrint(`> ${raw}`, 'cmd-log');
+      terminalInput.value = '';
+
+      const command = raw.toLowerCase();
+
+      if (terminalCommands[command]) {
+        const lines = terminalCommands[command]();
+        lines.forEach(([message, className]) => terminalPrint(message, className));
+      } else {
+        terminalPrint(`UNKNOWN COMMAND: ${raw}`, 'err-log');
+        terminalPrint('TYPE "//HELP" FOR AVAILABLE COMMANDS.', 'sys-log');
+      }
+    });
+
+
+    /* ---------------- Hidden //P-93 distributor ---------------- */
+
+    const P93_COLORS = [
+      { name: 'green', value: '#00ff66' },
+      { name: 'orange', value: '#ff9d22' },
+      { name: 'red', value: '#ff3030' }
+    ];
+
+    function randomP93Color() {
+      return P93_COLORS[Math.floor(Math.random() * P93_COLORS.length)];
+    }
+
+    function refreshP93Nodes() {
+      p93Nodes.forEach((node) => {
+        const number = Number(node.dataset.node);
+
+        // Node 2 is ALWAYS red; node 5 is ALWAYS orange.
+        if (number === 2) {
+          node.classList.remove('green', 'orange');
+          node.classList.add('red');
+          node.style.color = '#ff3030';
+        } else if (number === 5) {
+          node.classList.remove('green', 'red');
+          node.classList.add('orange');
+          node.style.color = '#ff9d22';
+        } else {
+          const color = randomP93Color();
+          node.classList.remove('green', 'orange', 'red');
+          node.classList.add(color.name);
+          node.style.color = color.value;
+        }
+
+        // Randomly flicker the non-fixed nodes.
+        if (number !== 2 && number !== 5) {
+          node.classList.toggle('flicker', Math.random() < 0.45);
+        } else {
+          node.classList.remove('flicker');
+        }
+      });
+    }
+
+    let p93Timer = null;
+
+    function openP93() {
+      hideOverlay(terminalScreen);
+      showOverlay(p93Screen);
+      refreshP93Nodes();
+
+      if (p93Timer) clearInterval(p93Timer);
+      p93Timer = setInterval(refreshP93Nodes, 850);
+    }
+
+    function closeP93() {
+      if (p93Timer) {
+        clearInterval(p93Timer);
+        p93Timer = null;
+      }
+      hideOverlay(p93Screen);
+      showOverlay(terminalScreen);
+      focusInput(terminalInput);
+    }
+
+    p93ReturnBtn.addEventListener('click', closeP93);
+
+    /* ---------------- Archive navigation ---------------- */
+
+    uaBackBtn.addEventListener('click', () => {
+      hideOverlay(unrestrictedArchiveScreen);
+      showOverlay(terminalScreen);
+      focusInput(terminalInput);
+    });
+
+    raPassBackBtn.addEventListener('click', () => {
+      hideOverlay(raPasswordScreen);
+      showOverlay(terminalScreen);
+      focusInput(terminalInput);
+    });
+
+    raBackBtn.addEventListener('click', () => {
+      hideOverlay(restrictedArchiveScreen);
+      showOverlay(terminalScreen);
+      focusInput(terminalInput);
+    });
+
+    formRaPassword.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      /* Deliberately separate from the two layer passwords. */
+      if (normalize(raPasswordInput.value) !== 'master') {
+        triggerCrash();
+        return;
+      }
+
+      state.restrictedArchiveUnlocked = true;
+      clearError(document.getElementById('error-ra-password'));
+      raPasswordInput.value = '';
+
+      hideOverlay(raPasswordScreen);
+      showOverlay(restrictedArchiveScreen);
+    });
+
+    /* ---------------- Stage 2 ---------------- */
+
+    document.getElementById('form-layer2').addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      if (normalize(layer2Input.value) !== LAYER2_KEY) {
+        triggerCrash();
+        return;
+      }
+
+      state.layer2Complete = true;
+      clearError(document.getElementById('error-layer2'));
+      layer2Input.value = '';
+
+      hideOverlay(successScreen);
+      showOverlay(successScreenLayer2);
+      startTunnel();
+      focusInput(layer3Input);
+    });
+
+    /* ---------------- Stage 3 placeholder ---------------- */
+
+    document.getElementById('form-layer3').addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const value = normalize(layer3Input.value);
+      if (!value) {
+        triggerCrash();
+        return;
+      }
+
+      /*
+       * The supplied source did not contain a Layer 3 key or validation rule.
+       * Keep this stage intentionally open-ended rather than inventing a puzzle
+       * solution that was not present in the uploaded source.
+       */
+      triggerCrash();
+    });
+
+    /* ---------------- CRT static ---------------- */
+
+    function resizeCanvas(canvas) {
+      // Keep the tunnel lightweight on phones. A full 2x DPR canvas is
+      // unnecessarily expensive for this effect.
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+    }
+
+    function resizeAllCanvases() {
+      resizeCanvas(staticCanvas);
+      resizeCanvas(glitchCanvas);
+      resizeCanvas(tunnelCanvas);
+    }
+
+    function drawStatic() {
+      const width = staticCanvas.width;
+      const height = staticCanvas.height;
+      const image = staticCtx.createImageData(width, height);
+      const data = image.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const value = Math.random() * 255;
+        data[i] = value;
+        data[i + 1] = value;
+        data[i + 2] = value;
+        data[i + 3] = Math.random() * 80;
+      }
+
+      staticCtx.putImageData(image, 0, 0);
+      requestAnimationFrame(drawStatic);
+    }
+
+    /* ---------------- Glitch effect ---------------- */
+
+    function drawGlitch() {
+      const w = glitchCanvas.width;
+      const h = glitchCanvas.height;
+
+      glitchCtx.clearRect(0, 0, w, h);
+
+      if (Math.random() < 0.045) {
+        glitchCtx.globalAlpha = 0.25 + Math.random() * 0.5;
+
+        for (let i = 0; i < 8; i++) {
+          const y = Math.random() * h;
+          const height = 1 + Math.random() * 12;
+          glitchCtx.fillStyle = Math.random() > 0.5 ? '#ff0055' : '#00ffff';
+          glitchCtx.fillRect(
+            Math.random() * w * 0.7,
+            y,
+            Math.random() * w * 0.35,
+            height
+          );
+        }
+
+        glitchCtx.globalAlpha = 1;
+      }
+
+      requestAnimationFrame(drawGlitch);
+    }
+
+    /* ---------------- Layer 2 perspective tunnel ---------------- */
+    let tunnelRunning = false;
+    let tunnelFrame = 0;
+    let tunnelLastTime = 0;
+
+    function startTunnel() {
+      tunnelRunning = true;
+      tunnelFrame = 0;
+      tunnelLastTime = 0;
+      resizeCanvas(tunnelCanvas);
+      tunnelCtx.clearRect(0, 0, tunnelCanvas.width, tunnelCanvas.height);
+      requestAnimationFrame(drawTunnel);
+    }
+
+    function drawTunnel(timestamp) {
+      if (!tunnelRunning || successScreenLayer2.style.display !== 'flex') return;
+
+      // Cap this animation at ~30 FPS. It looks smoother for this slow effect
+      // while cutting the amount of work on mobile devices substantially.
+      if (timestamp - tunnelLastTime < 33) {
+        requestAnimationFrame(drawTunnel);
+        return;
+      }
+      tunnelLastTime = timestamp;
+
+      const w = tunnelCanvas.width;
+      const h = tunnelCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      // Very short trails, like the clean reference image.
+      tunnelCtx.fillStyle = 'rgba(0, 0, 0, 0.30)';
+      tunnelCtx.fillRect(0, 0, w, h);
+
+      const maxR = Math.sqrt(w * w + h * h) * 0.70;
+
+      // Fewer wireframe planes = much less GPU/CPU work.
+      const lineCount = 24;
+      const speed = 0.0032;
+
+      tunnelCtx.lineWidth = Math.max(0.8, w / 1800);
+      tunnelCtx.strokeStyle = 'rgba(255, 235, 35, 0.72)';
+      tunnelCtx.shadowBlur = 0;
+
+      for (let i = 0; i < lineCount; i++) {
+        let t = (i / lineCount - tunnelFrame * speed) % 1;
+        if (t < 0) t += 1;
+
+        // Keep the perspective concentrated toward the bright center.
+        const eased = t * t * t;
+        const r = 16 + eased * maxR;
+
+        const perspectiveW = r * 1.68;
+        const perspectiveH = r * 0.94;
+
+        tunnelCtx.beginPath();
+        tunnelCtx.moveTo(cx - perspectiveW, cy - perspectiveH);
+        tunnelCtx.lineTo(cx + perspectiveW, cy - perspectiveH);
+        tunnelCtx.lineTo(cx + perspectiveW, cy + perspectiveH);
+        tunnelCtx.lineTo(cx - perspectiveW, cy + perspectiveH);
+        tunnelCtx.closePath();
+        tunnelCtx.stroke();
+      }
+
+      // Fewer long rays, matching the reference without overwhelming the screen.
+      const rayCount = 18;
+      tunnelCtx.lineWidth = Math.max(0.7, w / 2100);
+      tunnelCtx.strokeStyle = 'rgba(255, 238, 55, 0.68)';
+
+      for (let i = 0; i < rayCount; i++) {
+        const a = (Math.PI * 2 * i) / rayCount;
+        const edge = maxR * 1.08;
+        const x = cx + Math.cos(a) * edge;
+        const y = cy + Math.sin(a) * edge;
+
+        tunnelCtx.beginPath();
+        tunnelCtx.moveTo(cx, cy);
+        tunnelCtx.lineTo(x, y);
+        tunnelCtx.stroke();
+      }
+
+      // Bright center, giving the same yellow destination/vanishing-point feel
+      // as the supplied reference.
+      const pulse = 0.90 + 0.10 * Math.sin(tunnelFrame * 0.035);
+      const glow = tunnelCtx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.34);
+      glow.addColorStop(0, `rgba(255, 245, 80, ${0.42 * pulse})`);
+      glow.addColorStop(0.20, 'rgba(255, 210, 0, 0.18)');
+      glow.addColorStop(1, 'rgba(255, 170, 0, 0)');
+      tunnelCtx.fillStyle = glow;
+      tunnelCtx.fillRect(0, 0, w, h);
+
+      tunnelFrame++;
+      requestAnimationFrame(drawTunnel);
+    }
+
+    /* ---------------- Crash screen ---------------- */
+
+    function triggerCrash() {
+      if (state.crashTriggered) return;
+      state.crashTriggered = true;
+      document.body.classList.remove('glitching');
+
+      document.querySelectorAll('.overlay-screen').forEach(hideOverlay);
+      layer1View.style.display = 'none';
+      crashScreen.style.display = 'flex';
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (state.crashTriggered) {
+        // Deliberately ignore input. The screen instructs the player to refresh.
+        event.preventDefault();
+        return;
+      }
+
+      /* Keep Escape useful for backing out of secondary screens. */
+      if (event.key === 'Escape') {
+        if (p93Screen.style.display === 'flex') {
+          closeP93();
+          return;
+        }
+        if (terminalScreen.style.display === 'flex') {
+          terminalBackBtn.click();
+        } else if (unrestrictedArchiveScreen.style.display === 'flex') {
+          uaBackBtn.click();
+        } else if (raPasswordScreen.style.display === 'flex') {
+          raPassBackBtn.click();
+        } else if (restrictedArchiveScreen.style.display === 'flex') {
+          raBackBtn.click();
+        }
+      }
+    });
+
+    /* ---------------- Initialization ---------------- */
+
+    window.addEventListener('resize', resizeAllCanvases);
+
+    resizeAllCanvases();
+    drawStatic();
+    drawGlitch();
+
+    /*
+     * The title is intentionally interactive: repeated clicks produce a
+     * brief glitch without changing puzzle state.
+     */
+    document.getElementById('title-heading').addEventListener('click', () => {
+      document.body.classList.add('glitching');
+      setTimeout(() => document.body.classList.remove('glitching'), 900);
+    });
+  </script>
+</body>
+</html>
