@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter_key</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: monospace;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 40% Opacity Logo Background */
+    .background-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('12669.png') no-repeat center center;
+      background-size: contain;
+      opacity: 0.40;
+      z-index: 1;
+    }
+
+    /* Canvas Noise Static Layer */
+    #static-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.20;
+    }
+
+    /* Horizontal TV Scanlines Layer */
+    .tv-scanlines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0.6)
+      );
+      background-size: 100% 4px;
+    }
+
+    /* Moving Horizontal Distortion Bar */
+    .tv-bar {
+      position: absolute;
+      top: -20%;
+      left: 0;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      z-index: 4;
+      pointer-events: none;
+      animation: scanBar 8s linear infinite;
+    }
+
+    @keyframes scanBar {
+      0% { top: -20%; }
+      100% { top: 120%; }
+    }
+
+    /* Main Content */
+    .content {
+      position: relative;
+      z-index: 5;
+      max-width: 600px;
+      padding: 20px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 2.5rem;
+      letter-spacing: 4px;
+      margin-bottom: 2rem;
+      font-weight: normal;
+    }
+    p.hint {
+      font-size: 0.95rem;
+      color: #cccccc;
+      margin-bottom: 2rem;
+    }
+    
+    /* Terminal Input Field */
+    .input-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .key-input {
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #ffffff;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 10px 15px;
+      width: 280px;
+      text-align: center;
+      outline: none;
+      letter-spacing: 2px;
+    }
+    .key-input:focus {
+      border-color: #cccccc;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    p.subtext {
+      font-size: 0.75rem;
+      color: #666666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="background-overlay"></div>
+  <canvas id="static-canvas"></canvas>
+  <div class="tv-scanlines"></div>
+  <div class="tv-bar"></div>
+  
+  <div class="content">
+    <h1>Enter_key</h1>
+    <p class="hint">The first door is always the easiest.</p>
+    
+    <div class="input-container">
+      <input type="text" class="key-input" placeholder="ENTER KEY..." autofocus />
+    </div>
+
+    <p class="subtext">SOMETHING IS WAITING</p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('static-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function generateStatic() {
+      const w = canvas.width;
+      const h = canvas.height;
+      if (w === 0 || h === 0) return;
+      
+      const imgData = ctx.createImageData(w, h);
+      const buffer = new Uint32Array(imgData.data.buffer);
+      const len = buffer.length;
+
+      for (let i = 0; i < len; i++) {
+        if (Math.random() < 0.5) {
+          buffer[i] = 0xffffffff;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function loop() {
+      generateStatic();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    loop();
+  </script>
+</body>
+</html>
+
