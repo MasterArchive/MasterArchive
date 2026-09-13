@@ -214,6 +214,20 @@
       box-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
     }
 
+    .layer3-input {
+      margin-top: 2.5rem;
+      border-color: #f3f3a8;
+      color: #f3f3a8;
+      background: rgba(10, 10, 5, 0.85);
+      position: relative;
+      z-index: 10;
+    }
+
+    .layer3-input:focus {
+      border-color: #ffffcc;
+      box-shadow: 0 0 10px rgba(243, 243, 168, 0.4);
+    }
+
     p.subtext {
       font-size: 0.75rem;
       color: #666666;
@@ -251,7 +265,7 @@
       box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
     }
 
-    /* --- SUCCESS SCREEN OVERLAY (LAYER 2 - 3D YELLOW TUNNEL) --- */
+    /* --- SUCCESS SCREEN OVERLAY (LAYER 2 - PALE YELLOW TUNNEL) --- */
     #success-screen-layer2 {
       display: none;
       position: fixed;
@@ -278,22 +292,22 @@
       z-index: 1;
     }
 
-    /* Original Layer 2 Completed Text Overlay */
+    /* Original Layer 2 Completed Text Overlay - Updated to Pale Yellow */
     #success-screen-layer2 h2 {
       position: relative;
       z-index: 10;
       font-size: 2.5rem;
       letter-spacing: 8px;
-      color: #ffff00;
+      color: #f3f3a8;
       text-transform: uppercase;
       font-weight: bold;
-      border: 2px solid #ffff00;
+      border: 2px solid #f3f3a8;
       padding: 18px 36px;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(10, 10, 5, 0.8);
       box-shadow: 
-        0 0 20px rgba(255, 255, 0, 0.5),
-        inset 0 0 15px rgba(255, 255, 0, 0.3);
-      text-shadow: 0 0 12px rgba(255, 255, 0, 0.8), 0 0 25px rgba(255, 200, 0, 0.5);
+        0 0 20px rgba(243, 243, 168, 0.3),
+        inset 0 0 15px rgba(243, 243, 168, 0.2);
+      text-shadow: 0 0 12px rgba(243, 243, 168, 0.6), 0 0 25px rgba(220, 220, 140, 0.4);
       backdrop-filter: blur(4px);
     }
 
@@ -427,10 +441,14 @@
     </div>
   </div>
 
-  <!-- Success Screen Overlay (Layer 2 - Identical Yellow Truss Tunnel) -->
+  <!-- Success Screen Overlay (Layer 2 - Pale Yellow Truss Tunnel) -->
   <div id="success-screen-layer2">
     <canvas id="tunnel-canvas"></canvas>
     <h2>LAYER 2 COMPLETED</h2>
+    
+    <div class="input-container" style="position: relative; z-index: 10;">
+      <input type="text" id="layer3-input" class="key-input layer3-input" placeholder="ENTER LAYER 3 KEY..." />
+    </div>
   </div>
 
   <!-- Crash Screen Overlay -->
@@ -461,6 +479,7 @@
     const titleHeading = document.getElementById('title-heading');
     const keyInput = document.getElementById('key-input');
     const layer2Input = document.getElementById('layer2-input');
+    const layer3Input = document.getElementById('layer3-input');
     const successScreen = document.getElementById('success-screen');
     const successScreenLayer2 = document.getElementById('success-screen-layer2');
     const crashScreen = document.getElementById('crash-screen');
@@ -504,9 +523,18 @@
           successScreen.style.display = 'none';
           successScreenLayer2.style.display = 'flex';
           startTunnelAnimation();
+          setTimeout(() => layer3Input.focus(), 100);
         } else {
           triggerCrash();
         }
+      }
+    });
+
+    /* Layer 3 Input Listener - No password required for now */
+    layer3Input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        layer3Input.value = '';
+        layer3Input.placeholder = 'NO PASSWORD REQUIRED';
       }
     });
 
@@ -592,7 +620,7 @@
       }
     }
 
-    /* --- REAL-TIME 3D YELLOW TRUSS TUNNEL ENGINE --- */
+    /* --- REAL-TIME 3D PALE YELLOW TRUSS TUNNEL ENGINE --- */
     let zOffset = 0;
     
     function startTunnelAnimation() {
@@ -605,7 +633,7 @@
         const cy = h / 2;
         const fov = 420;
 
-        tunnelCtx.fillStyle = '#020200';
+        tunnelCtx.fillStyle = '#020201';
         tunnelCtx.fillRect(0, 0, w, h);
 
         zOffset += 0.025; // Speed of motion into tunnel
@@ -621,12 +649,12 @@
           };
         }
 
-        // Draw Center Light Flare
+        // Draw Center Light Flare (Pale Yellow)
         const flareGlow = tunnelCtx.createRadialGradient(cx, cy, 2, cx, cy, Math.max(w, h) * 0.35);
         flareGlow.addColorStop(0, '#ffffff');
-        flareGlow.addColorStop(0.08, '#ffff33');
-        flareGlow.addColorStop(0.25, '#ffcc00');
-        flareGlow.addColorStop(0.55, 'rgba(180, 130, 0, 0.3)');
+        flareGlow.addColorStop(0.08, '#ffffd0');
+        flareGlow.addColorStop(0.25, '#e8e2aa');
+        flareGlow.addColorStop(0.55, 'rgba(160, 155, 110, 0.2)');
         flareGlow.addColorStop(1, 'rgba(0,0,0,0)');
 
         tunnelCtx.fillStyle = flareGlow;
@@ -634,12 +662,12 @@
         tunnelCtx.arc(cx, cy, Math.max(w, h) * 0.35, 0, Math.PI * 2);
         tunnelCtx.fill();
 
-        // Draw Center Horizontal Glow Strip
+        // Draw Center Horizontal Glow Strip (Pale Yellow)
         const horizGlow = tunnelCtx.createLinearGradient(0, cy, w, cy);
         horizGlow.addColorStop(0, 'rgba(0,0,0,0)');
-        horizGlow.addColorStop(0.35, 'rgba(255, 230, 0, 0.2)');
-        horizGlow.addColorStop(0.5, 'rgba(255, 255, 200, 0.8)');
-        horizGlow.addColorStop(0.65, 'rgba(255, 230, 0, 0.2)');
+        horizGlow.addColorStop(0.35, 'rgba(240, 235, 170, 0.15)');
+        horizGlow.addColorStop(0.5, 'rgba(255, 255, 230, 0.7)');
+        horizGlow.addColorStop(0.65, 'rgba(240, 235, 170, 0.15)');
         horizGlow.addColorStop(1, 'rgba(0,0,0,0)');
         
         tunnelCtx.fillStyle = horizGlow;
@@ -662,18 +690,18 @@
         const yFloor1 = 1.6;
         const yFloor2 = 2.1;
 
-        // Helper function for depth-faded stroke styles
-        function setYellowStyle(z, baseWidth = 2) {
+        // Helper function for pale yellow depth-faded stroke styles
+        function setPaleYellowStyle(z, baseWidth = 2) {
           const depthRatio = Math.max(0, Math.min(1, (z - zMin) / (zMax - zMin)));
           const alpha = Math.max(0.15, 1 - depthRatio * 0.8);
           const width = Math.max(0.8, (1 - depthRatio * 0.7) * baseWidth);
           
           if (depthRatio < 0.25) {
-            tunnelCtx.strokeStyle = `rgba(255, 230, 40, ${alpha})`;
+            tunnelCtx.strokeStyle = `rgba(245, 240, 170, ${alpha})`;
           } else if (depthRatio < 0.65) {
-            tunnelCtx.strokeStyle = `rgba(220, 180, 0, ${alpha})`;
+            tunnelCtx.strokeStyle = `rgba(195, 190, 130, ${alpha})`;
           } else {
-            tunnelCtx.strokeStyle = `rgba(255, 255, 180, ${alpha * 0.9})`;
+            tunnelCtx.strokeStyle = `rgba(245, 245, 210, ${alpha * 0.8})`;
           }
           tunnelCtx.lineWidth = width;
         }
@@ -683,7 +711,7 @@
           const x = xMin + col * xStep;
           
           // Ceiling tier 1
-          setYellowStyle(2.0, 2.5);
+          setPaleYellowStyle(2.0, 2.5);
           tunnelCtx.beginPath();
           let pNear = project(x, yCeil1, zMin);
           let pFar = project(x, yCeil1, zMax);
@@ -723,7 +751,7 @@
           const z = zMin + i * ringSpacing - currentShift;
           if (z < zMin || z > zMax) continue;
 
-          setYellowStyle(z, 3.0);
+          setPaleYellowStyle(z, 3.0);
 
           // Horizontal Ceiling Crossbars (Tier 1 & Tier 2)
           let pC1_L = project(xMin, yCeil1, z);
@@ -798,7 +826,7 @@
         }
 
         // Longitudinal Chevron Rails running down the length
-        setYellowStyle(2.0, 3.5);
+        setPaleYellowStyle(2.0, 3.5);
 
         // Left Apex Longitudinal Line
         tunnelCtx.beginPath();
