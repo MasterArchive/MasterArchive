@@ -1,0 +1,169 @@
+
+
+img = Path("/mnt/data/12669.png")
+out_dir = Path("/mnt/data/masterkey_site")
+out_dir.mkdir(exist_ok=True)
+
+html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enter.Key</title>
+<style>
+    * { box-sizing: border-box; }
+
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        font-family: "Courier New", monospace;
+    }
+
+    body {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Your symbol, at roughly 40% opacity */
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: url("12669.png") center / cover no-repeat;
+        opacity: 0.40;
+        z-index: 0;
+    }
+
+    /* Moving CRT/static lines */
+    body::after {
+        content: "";
+        position: fixed;
+        inset: -100%;
+        z-index: 1;
+        pointer-events: none;
+        background:
+            repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.055) 0px,
+                rgba(255,255,255,0.055) 1px,
+                transparent 1px,
+                transparent 5px
+            );
+        animation: scan 0.18s linear infinite;
+    }
+
+    @keyframes scan {
+        from { transform: translateY(0); }
+        to   { transform: translateY(5px); }
+    }
+
+    .screen {
+        position: relative;
+        z-index: 2;
+        width: min(850px, 90vw);
+        text-align: center;
+    }
+
+    h1 {
+        margin: 0 0 35px;
+        font-size: clamp(38px, 7vw, 82px);
+        letter-spacing: 10px;
+        text-shadow: 0 0 15px #fff, 0 0 35px #ffe58a;
+        animation: flicker 3s infinite;
+    }
+
+    .text {
+        min-height: 90px;
+        font-size: clamp(14px, 2vw, 19px);
+        letter-spacing: 2px;
+        line-height: 1.8;
+        text-shadow: 0 0 8px #fff;
+    }
+
+    .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 19px;
+        margin-left: 5px;
+        vertical-align: middle;
+        background: #fff;
+        animation: blink .7s steps(1) infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    @keyframes flicker {
+        0%, 19%, 21%, 63%, 64%, 100% { opacity: 1; }
+        20%, 62% { opacity: .75; }
+    }
+
+    .hint {
+        margin-top: 35px;
+        font-size: 12px;
+        opacity: .45;
+        letter-spacing: 3px;
+    }
+</style>
+</head>
+<body>
+    <main class="screen">
+        <h1>Enter.Key</h1>
+        <div class="text">
+            <span id="message"></span><span class="cursor"></span>
+        </div>
+        <div class="hint">SOMETHING IS WAITING</div>
+    </main>
+
+<script>
+const messages = [
+    "The key has already been entered.",
+    "Do you know what you are looking for?",
+    "There are things here that were never meant to be found.",
+    "Keep looking.",
+    "The first door is always the easiest.",
+    "ERROR: MEMORY NOT FOUND",
+    "You were not supposed to see this.",
+    "Some answers create more questions."
+];
+
+let index = 0;
+let char = 0;
+const el = document.getElementById("message");
+
+function typeMessage() {
+    const text = messages[index];
+
+    if (char <= text.length) {
+        el.textContent = text.slice(0, char++);
+        setTimeout(typeMessage, 45);
+    } else {
+        setTimeout(() => {
+            el.textContent = "";
+            char = 0;
+            index = (index + 1) % messages.length;
+            typeMessage();
+        }, 2200);
+    }
+}
+
+typeMessage();
+</script>
+</body>
+</html>
+"""
+
+(out_dir / "index.html").write_text(html, encoding="utf-8")
+(out_dir / "12669.png").write_bytes(img.read_bytes())
+
+zip_path = Path("/mnt/data/masterkey_site.zip")
+with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+    z.write(out_dir / "index.html", "index.html")
+    z.write(out_dir / "12669.png", "12669.png")
+
+print(zip_path)
