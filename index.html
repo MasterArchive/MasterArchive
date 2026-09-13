@@ -253,6 +253,19 @@
       box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
     }
 
+    /* Secret RGB (1,1,1) Message in Corner */
+    .secret-corner-message {
+      position: absolute;
+      bottom: 12px;
+      right: 15px;
+      color: rgb(1, 1, 1);
+      font-size: 0.7rem;
+      line-height: 1.4;
+      text-align: right;
+      pointer-events: auto;
+      user-select: text;
+    }
+
     /* --- GLITCH ANIMATIONS (Triggered at 20s) --- */
     .glitching .viewport-wrapper {
       animation: screenShake 0.25s infinite alternate;
@@ -359,6 +372,10 @@
   <!-- Success Screen Overlay -->
   <div id="success-screen">
     <h2>LAYER 1 COMPLETED</h2>
+    <div class="secret-corner-message">
+      I hide away from morning light,<br>
+      And come alive in deep of night.
+    </div>
   </div>
 
   <!-- Crash Screen Overlay -->
