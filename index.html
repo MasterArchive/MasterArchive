@@ -196,11 +196,26 @@
       text-align: center;
       outline: none;
       letter-spacing: 2px;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     
     .key-input:focus {
       border-color: #cccccc;
       box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    .key-input.error {
+      border-color: #ff3333 !important;
+      box-shadow: 0 0 12px rgba(255, 51, 51, 0.8) !important;
+      animation: errorShake 0.3s ease-in-out;
+    }
+
+    @keyframes errorShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
     }
 
     .layer2-input {
@@ -304,7 +319,6 @@
       z-index: 1;
     }
 
-    /* Original Layer 2 Completed Text Overlay */
     #success-screen-layer2 h2 {
       position: relative;
       z-index: 10;
@@ -323,7 +337,6 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Secret Ciphered Message */
     .secret-corner-message {
       position: absolute;
       bottom: 12px;
@@ -432,7 +445,7 @@
       <p class="hint">The first door is always the easiest.</p>
       
       <div class="input-container">
-        <input type="text" id="key-input" class="key-input" placeholder="ENTER KEY..." autofocus />
+        <input type="text" id="key-input" class="key-input" placeholder="ENTER KEY..." autofocus autocomplete="off" spellcheck="false" />
       </div>
 
       <p class="subtext">Sometimes, something is closer than it appears.</p>
@@ -443,11 +456,10 @@
   <div id="success-screen">
     <h2>LAYER 1 COMPLETED</h2>
     
-    <!-- Dynamic Matrix Line -->
     <div id="matrix-line" class="matrix-line"></div>
 
     <div class="input-container">
-      <input type="text" id="layer2-input" class="key-input layer2-input" placeholder="ENTER LAYER 2 KEY..." />
+      <input type="text" id="layer2-input" class="key-input layer2-input" placeholder="ENTER LAYER 2 KEY..." autocomplete="off" spellcheck="false" />
     </div>
 
     <div class="secret-corner-message">
@@ -462,7 +474,7 @@
     <h2>LAYER 2 COMPLETED</h2>
     
     <div class="input-container" style="position: relative; z-index: 10;">
-      <input type="text" id="layer3-input" class="key-input layer3-input" placeholder="ENTER LAYER 3 KEY..." />
+      <input type="text" id="layer3-input" class="key-input layer3-input" placeholder="ENTER LAYER 3 KEY..." autocomplete="off" spellcheck="false" />
     </div>
   </div>
 
@@ -504,8 +516,9 @@
     let isHoveringHeading = false;
     let crashTimer = null;
     let tunnelAnimId = null;
+    let frameCounter = 0;
 
-    /* --- MATRIX CODE STREAM GENERATOR FOR STAGE 1 --- */
+    /* --- MATRIX CODE STREAM GENERATOR --- */
     const matrixChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+-/<>[]={}';
     function updateMatrixLine() {
       if (!matrixLine) return;
@@ -516,7 +529,7 @@
       }
       matrixLine.textContent = line;
     }
-    setInterval(updateMatrixLine, 50);
+    setInterval(updateMatrixLine, 60);
 
     function triggerCrash() {
       if (crashTimer) clearTimeout(crashTimer);
@@ -524,6 +537,13 @@
       successScreen.style.display = 'none';
       successScreenLayer2.style.display = 'none';
       crashScreen.style.display = 'flex';
+    }
+
+    function indicateError(inputElem) {
+      inputElem.classList.add('error');
+      setTimeout(() => {
+        inputElem.classList.remove('error');
+      }, 500);
     }
 
     titleHeading.addEventListener('mouseenter', () => isHoveringHeading = true);
@@ -537,9 +557,9 @@
           if (crashTimer) clearTimeout(crashTimer);
           document.querySelector('.viewport-wrapper').style.display = 'none';
           successScreen.style.display = 'flex';
-          layer2Input.focus();
+          setTimeout(() => layer2Input.focus(), 100);
         } else {
-          triggerCrash();
+          indicateError(keyInput);
         }
       }
     });
@@ -554,12 +574,12 @@
           startTunnelAnimation();
           setTimeout(() => layer3Input.focus(), 100);
         } else {
-          triggerCrash();
+          indicateError(layer2Input);
         }
       }
     });
 
-    /* Layer 3 Input Listener - No password required for now */
+    /* Layer 3 Input Listener */
     layer3Input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         layer3Input.value = '';
@@ -595,9 +615,11 @@
     }
 
     function animateTextStatic() {
+      // Throttle texture updates to prevent performance drop
+      if (frameCounter % 3 !== 0) return;
+
       const imgData = textStaticCtx.createImageData(128, 128);
       const data = imgData.data;
-
       const noiseThreshold = isHoveringHeading ? 0.8 : 0.5;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -665,7 +687,7 @@
         tunnelCtx.fillStyle = '#020201';
         tunnelCtx.fillRect(0, 0, w, h);
 
-        zOffset += 0.025; // Speed of motion into tunnel
+        zOffset += 0.025;
 
         function project(x, y, z) {
           if (z <= 0.05) z = 0.05;
@@ -678,7 +700,6 @@
           };
         }
 
-        // Draw Center Light Flare (Pale Yellow)
         const flareGlow = tunnelCtx.createRadialGradient(cx, cy, 2, cx, cy, Math.max(w, h) * 0.35);
         flareGlow.addColorStop(0, '#ffffff');
         flareGlow.addColorStop(0.08, '#ffffd0');
@@ -690,20 +711,3 @@
         tunnelCtx.beginPath();
         tunnelCtx.arc(cx, cy, Math.max(w, h) * 0.35, 0, Math.PI * 2);
         tunnelCtx.fill();
-
-        // Draw Center Horizontal Glow Strip (Pale Yellow)
-        const horizGlow = tunnelCtx.createLinearGradient(0, cy, w, cy);
-        horizGlow.addColorStop(0, 'rgba(0,0,0,0)');
-        horizGlow.addColorStop(0.35, 'rgba(240, 235, 170, 0.15)');
-        horizGlow.addColorStop(0.5, 'rgba(255, 255, 230, 0.7)');
-        horizGlow.addColorStop(0.65, 'rgba(240, 235, 170, 0.15)');
-        horizGlow.addColorStop(1, 'rgba(0,0,0,0)');
-        
-        tunnelCtx.fillStyle = horizGlow;
-        tunnelCtx.fillRect(0, cy - 8, w, 16);
-
-        // Tunnel Configuration
-        const numRings = 28;
-        const ringSpacing = 0.8;
-        const zMin = 0.6;
-        const zMax = zMin + numRings * ringSpacin
