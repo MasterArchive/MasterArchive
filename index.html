@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enter_key</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: monospace;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background Container for Screen Shake */
+    .viewport-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 40% Opacity Logo Background */
+    .background-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('12669.png') no-repeat center center;
+      background-size: contain;
+      opacity: 0.40;
+      z-index: 1;
+    }
+
+    /* Canvas Noise Static Layer - Fades In Over 10 Seconds */
+    #static-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      animation: fadeInStatic 10s ease-in-out forwards;
+    }
+
+    @keyframes fadeInStatic {
+      0% { opacity: 0; }
+      100% { opacity: 0.25; }
+    }
+
+    /* Horizontal TV Scanlines Layer */
+    .tv-scanlines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0, 0, 0, 0.6) 50%,
+        rgba(0, 0, 0, 0.6)
+      );
+      background-size: 100% 4px;
+      animation: fadeInScanlines 10s ease-in-out forwards;
+    }
+
+    @keyframes fadeInScanlines {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    /* Moving Horizontal Distortion Bar */
+    .tv-bar {
+      position: absolute;
+      top: -20%;
+      left: 0;
+      width: 100%;
+      height: 20%;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      z-index: 4;
+      pointer-events: none;
+      animation: scanBar 8s linear infinite;
+    }
+
+    @keyframes scanBar {
+      0% { top: -20%; }
+      100% { top: 120%; }
+    }
+
+    /* Main Content */
+    .content {
+      position: relative;
+      z-index: 5;
+      max-width: 600px;
+      padding: 20px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 2.5rem;
+      letter-spacing: 4px;
+      margin-bottom: 2rem;
+      font-weight: normal;
+      position: relative;
+    }
+    p.hint {
+      font-size: 0.95rem;
+      color: #cccccc;
+      margin-bottom: 2rem;
+    }
+    
+    /* Terminal Input Field */
+    .input-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .key-input {
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid #ffffff;
+      color: #ffffff;
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 10px 15px;
+      width: 280px;
+      text-align: center;
+      outline: none;
+      letter-spacing: 2px;
+    }
+    .key-input:focus {
+      border-color: #cccccc;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+
+    p.subtext {
+      font-size: 0.75rem;
+      color: #666666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 1rem;
+    }
+
+    /* --- GLITCH EFFECTS (Triggered at 10s) --- */
+    .glitching .viewport-wrapper {
+      animation: screenShake 0.4s infinite alternate;
+    }
+
+    .glitching h1 {
+      animation: textJitter 0.2s infinite;
+    }
+
+    .glitching .key-input {
+      animation: borderFlicker 0.15s infinite;
+    }
+
+    @keyframes screenShake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-3px, 2px); }
+      40% { transform: translate(3px, -1px); }
+      60% { transform: translate(-2px, -2px); }
+      80% { transform: translate(2px, 3px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes textJitter {
+      0% { transform: skew(0deg); }
+      20% { transform: skew(4deg) translate(-2px, 1px); }
+      40% { transform: skew(-3deg) translate(2px, -1px); }
+      60% { transform: skew(0deg); }
+      80% { transform: skew(5deg); }
+      100% { transform: skew(0deg); }
+    }
+
+    @keyframes borderFlicker {
+      0% { border-color: #ffffff; box-shadow: none; }
+      50% { border-color: #ff0055; box-shadow: -2px 0 #00ffff; }
+      100% { border-color: #ffffff; box-shadow: none; }
+    }
+
+    /* --- FAKE SYSTEM CRASH SCREEN (Triggered at 45s) --- */
+    #crash-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #0000aa;
+      color: #ffffff;
+      font-family: monospace;
+      z-index: 9999;
+      padding: 40px;
+      text-align: left;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    #crash-screen h2 {
+      background-color: #aaaaaa;
+      color: #0000aa;
+      padding: 2px 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 25px;
+    }
+
+    #crash-screen p {
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .crash-details {
+      margin-top: 30px;
+      color: #ffff55;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Viewport -->
+  <div class="viewport-wrapper">
+    <div class="background-overlay"></div>
+    <canvas id="static-canvas"></canvas>
+    <div class="tv-scanlines"></div>
+    <div class="tv-bar"></div>
+    
+    <div class="content">
+      <h1>Enter_key</h1>
+      <p class="hint">The first door is always the easiest.</p>
+      
+      <div class="input-container">
+        <input type="text" class="key-input" placeholder="ENTER KEY..." autofocus />
+      </div>
+
+      <p class="subtext">SOMETHING IS WAITING</p>
+    </div>
+  </div>
+
+  <!-- Crash Screen Overlay -->
+  <div id="crash-screen">
+    <h2>SYSTEM FATAL ERROR</h2>
+    <p>A fatal exception 0E has occurred at 0028:C0011E36 in VXD SYSTEM(01).</p>
+    <p>The current application will be terminated.</p>
+    <br>
+    <p class="crash-details">*** Error 311</p>
+    <p class="crash-details">*** Key_Was_Lost</p>
+    <br>
+    <p>Press any key to restart your system...</p>
+  </div>
+
+  <script>
+    /* Canvas Static Generator */
+    const canvas = document.getElementById('static-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function generateStatic() {
+      const w = canvas.width;
+      const h = canvas.height;
+      if (w === 0 || h === 0) return;
+      
+      const imgData = ctx.createImageData(w, h);
+      const buffer = new Uint32Array(imgData.data.buffer);
+      const len = buffer.length;
+
+      for (let i = 0; i < len; i++) {
+        if (Math.random() < 0.5) {
+          buffer[i] = 0xffffffff;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function loop() {
+      generateStatic();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    loop();
+
+    /* 10 Seconds: Trigger Glitch Effect */
+    setTimeout(() => {
+      document.body.classList.add('glitching');
+    }, 10000);
+
+    /* 45 Seconds: Trigger Blue Screen Crash */
+    setTimeout(() => {
+      document.querySelector('.viewport-wrapper').style.display = 'none';
+      const crashScreen = document.getElementById('crash-screen');
+      crashScreen.style.display = 'flex';
+    }, 45000);
+  </script>
+</body>
+</html>
+
