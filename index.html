@@ -268,17 +268,67 @@
       align-items: center;
       flex-direction: column;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Central Glowing Light Core */
+    .yellow-light-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      background: #ffffff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 
+        0 0 40px 20px #ffffff,
+        0 0 100px 60px #ffff00,
+        0 0 200px 120px #ffcc00,
+        0 0 400px 200px rgba(255, 204, 0, 0.4);
+      z-index: 1;
+      animation: pulseGlow 2s ease-in-out infinite alternate;
+    }
+
+    /* Rotating Radial Rays Effect */
+    .yellow-rays {
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-conic-gradient(
+        from 0deg,
+        rgba(255, 255, 0, 0.25) 0deg 10deg,
+        transparent 10deg 20deg
+      );
+      z-index: 1;
+      animation: rotateRays 30s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotateRays {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; }
+      100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
     }
 
     #success-screen-layer2 h2 {
+      position: relative;
+      z-index: 2;
       font-size: 2.2rem;
       letter-spacing: 6px;
       color: #ffffa0;
-      text-shadow: 0 0 10px rgba(255, 255, 160, 0.6), 0 0 20px rgba(255, 255, 160, 0.3);
+      text-shadow: 0 0 10px rgba(255, 255, 160, 0.9), 0 0 30px rgba(255, 255, 0, 0.8);
       border: 2px solid #ffffa0;
       padding: 15px 30px;
-      background: rgba(20, 20, 0, 0.8);
-      box-shadow: 0 0 15px rgba(255, 255, 160, 0.2);
+      background: rgba(10, 10, 0, 0.85);
+      box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
     }
 
     /* Secret Ciphered RGB (1,1,1) Message in Corner */
@@ -331,7 +381,7 @@
       100% { border-color: #ffffff; box-shadow: none; }
     }
 
-    /* --- FAKE SYSTEM CRASH SCREEN (Triggered instantly on fail or at 45s) --- */
+    /* --- FAKE SYSTEM CRASH SCREEN --- */
     #crash-screen {
       display: none;
       position: fixed;
@@ -411,8 +461,10 @@
     </div>
   </div>
 
-  <!-- Success Screen Overlay (Layer 2 - Yellow) -->
+  <!-- Success Screen Overlay (Layer 2 - Yellow Rays) -->
   <div id="success-screen-layer2">
+    <div class="yellow-light-core"></div>
+    <div class="yellow-rays"></div>
     <h2>LAYER 2 COMPLETED</h2>
   </div>
 
