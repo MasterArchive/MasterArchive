@@ -166,24 +166,12 @@
     }
 
     @keyframes headingStaticGlitch {
-      0% {
-        transform: skewX(0deg) translate(0, 0);
-      }
-      20% {
-        transform: skewX(12deg) translate(-3px, 1px);
-      }
-      40% {
-        transform: skewX(-8deg) translate(3px, -1px);
-      }
-      60% {
-        transform: skewX(4deg) translate(-1px, 2px);
-      }
-      80% {
-        transform: skewX(-10deg) translate(2px, -2px);
-      }
-      100% {
-        transform: skewX(0deg) translate(0, 0);
-      }
+      0% { transform: skewX(0deg) translate(0, 0); }
+      20% { transform: skewX(12deg) translate(-3px, 1px); }
+      40% { transform: skewX(-8deg) translate(3px, -1px); }
+      60% { transform: skewX(4deg) translate(-1px, 2px); }
+      80% { transform: skewX(-10deg) translate(2px, -2px); }
+      100% { transform: skewX(0deg) translate(0, 0); }
     }
 
     p.hint {
@@ -192,7 +180,7 @@
       margin-bottom: 2rem;
     }
     
-    /* Terminal Input Field */
+    /* Terminal Input Fields */
     .input-container {
       display: flex;
       justify-content: center;
@@ -216,6 +204,17 @@
       box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
     }
 
+    /* Layer 2 Specific Input Styling */
+    .layer2-input {
+      margin-top: 2rem;
+      border-color: #00ff66;
+      color: #00ff66;
+    }
+    .layer2-input:focus {
+      border-color: #00ff66;
+      box-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+    }
+
     p.subtext {
       font-size: 0.75rem;
       color: #666666;
@@ -224,7 +223,7 @@
       margin-top: 1rem;
     }
 
-    /* --- SUCCESS SCREEN OVERLAY --- */
+    /* --- SUCCESS SCREEN OVERLAY (LAYER 1) --- */
     #success-screen {
       display: none;
       position: fixed;
@@ -251,6 +250,35 @@
       padding: 15px 30px;
       background: rgba(0, 20, 0, 0.8);
       box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+    }
+
+    /* --- SUCCESS SCREEN OVERLAY (LAYER 2 - YELLOW) --- */
+    #success-screen-layer2 {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #050505;
+      color: #ffffa0;
+      font-family: monospace;
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    #success-screen-layer2 h2 {
+      font-size: 2.2rem;
+      letter-spacing: 6px;
+      color: #ffffa0;
+      text-shadow: 0 0 10px rgba(255, 255, 160, 0.6), 0 0 20px rgba(255, 255, 160, 0.3);
+      border: 2px solid #ffffa0;
+      padding: 15px 30px;
+      background: rgba(20, 20, 0, 0.8);
+      box-shadow: 0 0 15px rgba(255, 255, 160, 0.2);
     }
 
     /* Secret Ciphered RGB (1,1,1) Message in Corner */
@@ -303,7 +331,7 @@
       100% { border-color: #ffffff; box-shadow: none; }
     }
 
-    /* --- FAKE SYSTEM CRASH SCREEN (Triggered at 45s) --- */
+    /* --- FAKE SYSTEM CRASH SCREEN (Triggered instantly on fail or at 45s) --- */
     #crash-screen {
       display: none;
       position: fixed;
@@ -314,7 +342,7 @@
       background-color: #0000aa;
       color: #ffffff;
       font-family: monospace;
-      z-index: 9999;
+      z-index: 99999;
       padding: 40px;
       text-align: left;
       flex-direction: column;
@@ -369,18 +397,28 @@
     </div>
   </div>
 
-  <!-- Success Screen Overlay -->
+  <!-- Success Screen Overlay (Layer 1 - Green) -->
   <div id="success-screen">
     <h2>LAYER 1 COMPLETED</h2>
+    
+    <div class="input-container">
+      <input type="text" id="layer2-input" class="key-input layer2-input" placeholder="ENTER LAYER 2 KEY..." />
+    </div>
+
     <div class="secret-corner-message">
       K uvca cyca htqo oqtpkpi nkijv,<br>
       Cpf eqog cnkxg kp fggr qh pkijv.
     </div>
   </div>
 
+  <!-- Success Screen Overlay (Layer 2 - Yellow) -->
+  <div id="success-screen-layer2">
+    <h2>LAYER 2 COMPLETED</h2>
+  </div>
+
   <!-- Crash Screen Overlay -->
   <div id="crash-screen">
-    <h2>CONNECTİON TERMİNATED</h2>
+    <h2>CONNECTION TERMINATED</h2>
     <p>A fatal exception 0E has occurred at 0028:C0011E36 in VXD SYSTEM(01).</p>
     <p>The current application will be terminated.</p>
     <br>
@@ -404,32 +442,53 @@
     const textStaticCtx = textStaticCanvas.getContext('2d');
     const titleHeading = document.getElementById('title-heading');
     const keyInput = document.getElementById('key-input');
+    const layer2Input = document.getElementById('layer2-input');
     const successScreen = document.getElementById('success-screen');
+    const successScreenLayer2 = document.getElementById('success-screen-layer2');
+    const crashScreen = document.getElementById('crash-screen');
 
     let isGlitching = false;
     let isHoveringHeading = false;
     let crashTimer = null;
 
+    function triggerCrash() {
+      if (crashTimer) clearTimeout(crashTimer);
+      document.querySelector('.viewport-wrapper').style.display = 'none';
+      successScreen.style.display = 'none';
+      successScreenLayer2.style.display = 'none';
+      crashScreen.style.display = 'flex';
+    }
+
     /* Track Hover State on Enter_key heading */
     titleHeading.addEventListener('mouseenter', () => isHoveringHeading = true);
     titleHeading.addEventListener('mouseleave', () => isHoveringHeading = false);
 
-    /* Listen for Key Entry */
+    /* Listen for Layer 1 Key Entry */
     keyInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const value = keyInput.value.trim().toLowerCase();
         if (value === 'dodecahedron') {
-          // Clear timeout so crash screen won't override success
           if (crashTimer) clearTimeout(crashTimer);
-
           document.querySelector('.viewport-wrapper').style.display = 'none';
           successScreen.style.display = 'flex';
+          layer2Input.focus();
         } else {
-          // Flash input border red if incorrect
-          keyInput.style.borderColor = '#ff0000';
-          setTimeout(() => {
-            keyInput.style.borderColor = '#ffffff';
-          }, 500);
+          // Immediately route to timeout/crash screen on wrong attempt
+          triggerCrash();
+        }
+      }
+    });
+
+    /* Listen for Layer 2 Key Entry */
+    layer2Input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = layer2Input.value.trim().toLowerCase();
+        if (value === 'shadow') {
+          successScreen.style.display = 'none';
+          successScreenLayer2.style.display = 'flex';
+        } else {
+          // Immediately route to timeout/crash screen on wrong attempt
+          triggerCrash();
         }
       }
     });
@@ -464,14 +523,13 @@
       const imgData = textStaticCtx.createImageData(128, 128);
       const data = imgData.data;
 
-      /* When hovered, increase contrast and noise variance */
       const noiseThreshold = isHoveringHeading ? 0.8 : 0.5;
 
       for (let i = 0; i < data.length; i += 4) {
         const val = Math.random() < noiseThreshold ? 255 : (isHoveringHeading ? 50 : 120);
-        data[i]     = 255; // Red channel
-        data[i + 1] = 255; // Green channel
-        data[i + 2] = val; // Blue channel variance creates static texture
+        data[i]     = 255; 
+        data[i + 1] = 255; 
+        data[i + 2] = val; 
         data[i + 3] = 255;
       }
 
@@ -535,11 +593,9 @@
       glitchCanvas.style.opacity = '0.85';
     }, 20000);
 
-    /* 45 Seconds: Cut to Blue Crash Screen */
+    /* 45 Seconds: Timeout Crash Screen */
     crashTimer = setTimeout(() => {
-      document.querySelector('.viewport-wrapper').style.display = 'none';
-      const crashScreen = document.getElementById('crash-screen');
-      crashScreen.style.display = 'flex';
+      triggerCrash();
     }, 45000);
   </script>
 </body>
