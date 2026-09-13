@@ -204,7 +204,7 @@
     }
 
     .layer2-input {
-      margin-top: 2rem;
+      margin-top: 1rem;
       border-color: #00ff66;
       color: #00ff66;
     }
@@ -263,6 +263,18 @@
       padding: 15px 30px;
       background: rgba(0, 20, 0, 0.8);
       box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Matrix Data Stream Line for Stage 1 */
+    .matrix-line {
+      font-size: 1rem;
+      letter-spacing: 4px;
+      color: #00ff66;
+      text-shadow: 0 0 8px rgba(0, 255, 102, 0.8), 0 0 15px rgba(0, 255, 102, 0.4);
+      margin-bottom: 1.5rem;
+      user-select: none;
+      font-weight: bold;
     }
 
     /* --- SUCCESS SCREEN OVERLAY (LAYER 2 - PALE YELLOW TUNNEL) --- */
@@ -292,7 +304,7 @@
       z-index: 1;
     }
 
-    /* Original Layer 2 Completed Text Overlay - Updated to Pale Yellow */
+    /* Original Layer 2 Completed Text Overlay */
     #success-screen-layer2 h2 {
       position: relative;
       z-index: 10;
@@ -427,10 +439,13 @@
     </div>
   </div>
 
-  <!-- Success Screen Overlay (Layer 1 - Green) -->
+  <!-- Success Screen Overlay (Layer 1 / Stage 1 - Green) -->
   <div id="success-screen">
     <h2>LAYER 1 COMPLETED</h2>
     
+    <!-- Dynamic Matrix Line -->
+    <div id="matrix-line" class="matrix-line"></div>
+
     <div class="input-container">
       <input type="text" id="layer2-input" class="key-input layer2-input" placeholder="ENTER LAYER 2 KEY..." />
     </div>
@@ -483,11 +498,25 @@
     const successScreen = document.getElementById('success-screen');
     const successScreenLayer2 = document.getElementById('success-screen-layer2');
     const crashScreen = document.getElementById('crash-screen');
+    const matrixLine = document.getElementById('matrix-line');
 
     let isGlitching = false;
     let isHoveringHeading = false;
     let crashTimer = null;
     let tunnelAnimId = null;
+
+    /* --- MATRIX CODE STREAM GENERATOR FOR STAGE 1 --- */
+    const matrixChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+-/<>[]={}';
+    function updateMatrixLine() {
+      if (!matrixLine) return;
+      let line = '';
+      const length = 38;
+      for (let i = 0; i < length; i++) {
+        line += matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+      }
+      matrixLine.textContent = line;
+    }
+    setInterval(updateMatrixLine, 50);
 
     function triggerCrash() {
       if (crashTimer) clearTimeout(crashTimer);
@@ -677,201 +706,4 @@
         const numRings = 28;
         const ringSpacing = 0.8;
         const zMin = 0.6;
-        const zMax = zMin + numRings * ringSpacing;
-
-        // X and Y bounds for floor/ceiling planes
-        const gridCols = 16;
-        const xMin = -4.5;
-        const xMax = 4.5;
-        const xStep = (xMax - xMin) / gridCols;
-
-        const yCeil1 = -1.6;
-        const yCeil2 = -2.1;
-        const yFloor1 = 1.6;
-        const yFloor2 = 2.1;
-
-        // Helper function for pale yellow depth-faded stroke styles
-        function setPaleYellowStyle(z, baseWidth = 2) {
-          const depthRatio = Math.max(0, Math.min(1, (z - zMin) / (zMax - zMin)));
-          const alpha = Math.max(0.15, 1 - depthRatio * 0.8);
-          const width = Math.max(0.8, (1 - depthRatio * 0.7) * baseWidth);
-          
-          if (depthRatio < 0.25) {
-            tunnelCtx.strokeStyle = `rgba(245, 240, 170, ${alpha})`;
-          } else if (depthRatio < 0.65) {
-            tunnelCtx.strokeStyle = `rgba(195, 190, 130, ${alpha})`;
-          } else {
-            tunnelCtx.strokeStyle = `rgba(245, 245, 210, ${alpha * 0.8})`;
-          }
-          tunnelCtx.lineWidth = width;
-        }
-
-        /* --- 1. LONGITUDINAL PIPES (Ceiling & Floor) --- */
-        for (let col = 0; col <= gridCols; col++) {
-          const x = xMin + col * xStep;
-          
-          // Ceiling tier 1
-          setPaleYellowStyle(2.0, 2.5);
-          tunnelCtx.beginPath();
-          let pNear = project(x, yCeil1, zMin);
-          let pFar = project(x, yCeil1, zMax);
-          tunnelCtx.moveTo(pNear.x, pNear.y);
-          tunnelCtx.lineTo(pFar.x, pFar.y);
-          tunnelCtx.stroke();
-
-          // Ceiling tier 2
-          tunnelCtx.beginPath();
-          pNear = project(x, yCeil2, zMin);
-          pFar = project(x, yCeil2, zMax);
-          tunnelCtx.moveTo(pNear.x, pNear.y);
-          tunnelCtx.lineTo(pFar.x, pFar.y);
-          tunnelCtx.stroke();
-
-          // Floor tier 1
-          tunnelCtx.beginPath();
-          pNear = project(x, yFloor1, zMin);
-          pFar = project(x, yFloor1, zMax);
-          tunnelCtx.moveTo(pNear.x, pNear.y);
-          tunnelCtx.lineTo(pFar.x, pFar.y);
-          tunnelCtx.stroke();
-
-          // Floor tier 2
-          tunnelCtx.beginPath();
-          pNear = project(x, yFloor2, zMin);
-          pFar = project(x, yFloor2, zMax);
-          tunnelCtx.moveTo(pNear.x, pNear.y);
-          tunnelCtx.lineTo(pFar.x, pFar.y);
-          tunnelCtx.stroke();
-        }
-
-        /* --- 2. CHEVRONS & CROSSBAR RINGS (Depth Loop) --- */
-        const currentShift = (zOffset % ringSpacing);
-
-        for (let i = numRings; i >= 0; i--) {
-          const z = zMin + i * ringSpacing - currentShift;
-          if (z < zMin || z > zMax) continue;
-
-          setPaleYellowStyle(z, 3.0);
-
-          // Horizontal Ceiling Crossbars (Tier 1 & Tier 2)
-          let pC1_L = project(xMin, yCeil1, z);
-          let pC1_R = project(xMax, yCeil1, z);
-          tunnelCtx.beginPath();
-          tunnelCtx.moveTo(pC1_L.x, pC1_L.y);
-          tunnelCtx.lineTo(pC1_R.x, pC1_R.y);
-          tunnelCtx.stroke();
-
-          let pC2_L = project(xMin, yCeil2, z);
-          let pC2_R = project(xMax, yCeil2, z);
-          tunnelCtx.beginPath();
-          tunnelCtx.moveTo(pC2_L.x, pC2_L.y);
-          tunnelCtx.lineTo(pC2_R.x, pC2_R.y);
-          tunnelCtx.stroke();
-
-          // Horizontal Floor Crossbars (Tier 1 & Tier 2)
-          let pF1_L = project(xMin, yFloor1, z);
-          let pF1_R = project(xMax, yFloor1, z);
-          tunnelCtx.beginPath();
-          tunnelCtx.moveTo(pF1_L.x, pF1_L.y);
-          tunnelCtx.lineTo(pF1_R.x, pF1_R.y);
-          tunnelCtx.stroke();
-
-          let pF2_L = project(xMin, yFloor2, z);
-          let pF2_R = project(xMax, yFloor2, z);
-          tunnelCtx.beginPath();
-          tunnelCtx.moveTo(pF2_L.x, pF2_L.y);
-          tunnelCtx.lineTo(pF2_R.x, pF2_R.y);
-          tunnelCtx.stroke();
-
-          // Vertical Struts connecting Tier 1 & Tier 2
-          for (let col = 0; col <= gridCols; col += 2) {
-            const x = xMin + col * xStep;
-            let pTop1 = project(x, yCeil1, z);
-            let pTop2 = project(x, yCeil2, z);
-            tunnelCtx.beginPath();
-            tunnelCtx.moveTo(pTop1.x, pTop1.y);
-            tunnelCtx.lineTo(pTop2.x, pTop2.y);
-            tunnelCtx.stroke();
-
-            let pBot1 = project(x, yFloor1, z);
-            let pBot2 = project(x, yFloor2, z);
-            tunnelCtx.beginPath();
-            tunnelCtx.moveTo(pBot1.x, pBot1.y);
-            tunnelCtx.lineTo(pBot2.x, pBot2.y);
-            tunnelCtx.stroke();
-          }
-
-          /* --- 3. LEFT & RIGHT SIDE CHEVRON TRUSSES --- */
-          // Left Side Chevron (< shape pointing in)
-          const pLeftOuterTop = project(-4.8, yCeil1, z);
-          const pLeftApex     = project(-2.2, 0, z);
-          const pLeftOuterBot = project(-4.8, yFloor1, z);
-
-          tunnelCtx.beginPath();
-          tunnelCtx.moveTo(pLeftOuterTop.x, pLeftOuterTop.y);
-          tunnelCtx.lineTo(pLeftApex.x, pLeftApex.y);
-          tunnelCtx.lineTo(pLeftOuterBot.x, pLeftOuterBot.y);
-          tunnelCtx.stroke();
-
-          // Right Side Chevron (> shape pointing in)
-          const pRightOuterTop = project(4.8, yCeil1, z);
-          const pRightApex     = project(2.2, 0, z);
-          const pRightOuterBot = project(4.8, yFloor1, z);
-
-          tunnelCtx.beginPath();
-          tunnelCtx.moveTo(pRightOuterTop.x, pRightOuterTop.y);
-          tunnelCtx.lineTo(pRightApex.x, pRightApex.y);
-          tunnelCtx.lineTo(pRightOuterBot.x, pRightOuterBot.y);
-          tunnelCtx.stroke();
-        }
-
-        // Longitudinal Chevron Rails running down the length
-        setPaleYellowStyle(2.0, 3.5);
-
-        // Left Apex Longitudinal Line
-        tunnelCtx.beginPath();
-        let pApexL_Near = project(-2.2, 0, zMin);
-        let pApexL_Far  = project(-2.2, 0, zMax);
-        tunnelCtx.moveTo(pApexL_Near.x, pApexL_Near.y);
-        tunnelCtx.lineTo(pApexL_Far.x, pApexL_Far.y);
-        tunnelCtx.stroke();
-
-        // Right Apex Longitudinal Line
-        tunnelCtx.beginPath();
-        let pApexR_Near = project(2.2, 0, zMin);
-        let pApexR_Far  = project(2.2, 0, zMax);
-        tunnelCtx.moveTo(pApexR_Near.x, pApexR_Near.y);
-        tunnelCtx.lineTo(pApexR_Far.x, pApexR_Far.y);
-        tunnelCtx.stroke();
-
-        tunnelAnimId = requestAnimationFrame(renderTunnel);
-      }
-
-      renderTunnel();
-    }
-
-    function loop() {
-      generateStatic();
-      animateTextStatic();
-      generateFullscreenGlitch();
-      requestAnimationFrame(loop);
-    }
-
-    window.addEventListener('resize', resize);
-    resize();
-    loop();
-
-    /* Activate Fullscreen Glitch Mode at 20 seconds */
-    setTimeout(() => {
-      isGlitching = true;
-      document.body.classList.add('glitching');
-      glitchCanvas.style.opacity = '0.85';
-    }, 20000);
-
-    /* Timeout Crash Screen at 45 seconds */
-    crashTimer = setTimeout(() => {
-      triggerCrash();
-    }, 45000);
-  </script>
-</body>
-</html>
+        const zMax = zMin + numRings * ringSpacin
