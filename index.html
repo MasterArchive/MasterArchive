@@ -224,6 +224,35 @@
       margin-top: 1rem;
     }
 
+    /* --- SUCCESS SCREEN OVERLAY --- */
+    #success-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #050505;
+      color: #00ff66;
+      font-family: monospace;
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    #success-screen h2 {
+      font-size: 2.2rem;
+      letter-spacing: 6px;
+      color: #00ff66;
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.6), 0 0 20px rgba(0, 255, 102, 0.3);
+      border: 2px solid #00ff66;
+      padding: 15px 30px;
+      background: rgba(0, 20, 0, 0.8);
+      box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+    }
+
     /* --- GLITCH ANIMATIONS (Triggered at 20s) --- */
     .glitching .viewport-wrapper {
       animation: screenShake 0.25s infinite alternate;
@@ -320,11 +349,16 @@
       <p class="hint">The first door is always the easiest.</p>
       
       <div class="input-container">
-        <input type="text" class="key-input" placeholder="ENTER KEY..." autofocus />
+        <input type="text" id="key-input" class="key-input" placeholder="ENTER KEY..." autofocus />
       </div>
 
       <p class="subtext">SOMETHING IS WAITING</p>
     </div>
+  </div>
+
+  <!-- Success Screen Overlay -->
+  <div id="success-screen">
+    <h2>LAYER 1 COMPLETED</h2>
   </div>
 
   <!-- Crash Screen Overlay -->
@@ -352,13 +386,36 @@
     const textStaticCanvas = document.getElementById('text-static-canvas');
     const textStaticCtx = textStaticCanvas.getContext('2d');
     const titleHeading = document.getElementById('title-heading');
+    const keyInput = document.getElementById('key-input');
+    const successScreen = document.getElementById('success-screen');
 
     let isGlitching = false;
     let isHoveringHeading = false;
+    let crashTimer = null;
 
     /* Track Hover State on Enter_key heading */
     titleHeading.addEventListener('mouseenter', () => isHoveringHeading = true);
     titleHeading.addEventListener('mouseleave', () => isHoveringHeading = false);
+
+    /* Listen for Key Entry */
+    keyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = keyInput.value.trim().toLowerCase();
+        if (value === 'dodecahedron') {
+          // Clear timeout so crash screen won't override success
+          if (crashTimer) clearTimeout(crashTimer);
+
+          document.querySelector('.viewport-wrapper').style.display = 'none';
+          successScreen.style.display = 'flex';
+        } else {
+          // Flash input border red if incorrect
+          keyInput.style.borderColor = '#ff0000';
+          setTimeout(() => {
+            keyInput.style.borderColor = '#ffffff';
+          }, 500);
+        }
+      }
+    });
 
     function resize() {
       staticCanvas.width = window.innerWidth;
@@ -462,7 +519,7 @@
     }, 20000);
 
     /* 45 Seconds: Cut to Blue Crash Screen */
-    setTimeout(() => {
+    crashTimer = setTimeout(() => {
       document.querySelector('.viewport-wrapper').style.display = 'none';
       const crashScreen = document.getElementById('crash-screen');
       crashScreen.style.display = 'flex';
