@@ -35,7 +35,7 @@
       align-items: center;
     }
 
-    /* 40% Opacity Logo Background */
+    /* Background Logo Overlay */
     .background-overlay {
       position: absolute;
       top: 0;
@@ -251,7 +251,7 @@
       box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
     }
 
-    /* --- SUCCESS SCREEN OVERLAY (LAYER 2 - VORTEX) --- */
+    /* --- SUCCESS SCREEN OVERLAY (LAYER 2 - VORTEX LIGHT EFFECT) --- */
     #success-screen-layer2 {
       display: none;
       position: fixed;
@@ -267,33 +267,33 @@
       flex-direction: column;
       text-align: center;
       overflow: hidden;
-      perspective: 800px;
+      perspective: 1000px;
     }
 
-    /* The Singularity Center Point */
+    /* Core Bright Singularity behind text */
     .yellow-light-core {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 4px;
-      height: 4px;
+      width: 8px;
+      height: 8px;
       background: #ffffff;
       border-radius: 50%;
       transform: translate(-50%, -50%);
       box-shadow: 
-        0 0 60px 40px #ffffff,
-        0 0 150px 80px #ffff00,
-        0 0 350px 180px #ff7700;
+        0 0 80px 50px #ffffff,
+        0 0 160px 100px #ffff00,
+        0 0 400px 200px #ff9900;
       z-index: 1;
-      animation: corePulse 0.8s ease-in-out infinite alternate;
+      animation: corePulse 1s ease-in-out infinite alternate;
     }
 
     @keyframes corePulse {
-      0% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-      100% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+      0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.9); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
     }
 
-    /* Spinning Tunnel Rays Background */
+    /* Rotating Tunnel Light Rays */
     .yellow-tunnel {
       position: absolute;
       top: -50%;
@@ -302,85 +302,81 @@
       height: 200%;
       background: repeating-conic-gradient(
         from 0deg,
-        rgba(255, 255, 0, 0.3) 0deg 3deg,
-        transparent 3deg 8deg
+        rgba(255, 255, 0, 0.4) 0deg 4deg,
+        transparent 4deg 10deg
       );
       z-index: 1;
-      animation: tunnelSpin 12s linear infinite;
-      /* Masks the edges and center so it feels like a volumetric tube */
-      -webkit-mask-image: radial-gradient(circle at center, transparent 8%, black 35%, transparent 70%);
-      mask-image: radial-gradient(circle at center, transparent 8%, black 35%, transparent 70%);
+      animation: tunnelSpin 10s linear infinite;
+      -webkit-mask-image: radial-gradient(circle at center, transparent 10%, black 40%, transparent 75%);
+      mask-image: radial-gradient(circle at center, transparent 10%, black 40%, transparent 75%);
     }
 
     @keyframes tunnelSpin {
       0% { transform: rotate(0deg); }
-      100% { transform: rotate(-360deg); }
+      100% { transform: rotate(360deg); }
     }
 
-    /* 3D Warp Rings Sucking Inward */
+    /* 3D Warp Light Rings converging into Text */
     .warp-ring {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 150vw;
-      height: 150vw;
+      width: 120vw;
+      height: 120vw;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 0, 0.8);
-      box-shadow: 
-        inset 0 0 50px rgba(255, 200, 0, 0.4),
-        0 0 50px rgba(255, 255, 0, 0.6);
+      border: 3px solid rgba(255, 230, 0, 0.8);
+      box-shadow: inset 0 0 40px rgba(255, 200, 0, 0.5), 0 0 40px rgba(255, 255, 0, 0.8);
       transform: translate(-50%, -50%) scale(2);
       opacity: 0;
       z-index: 2;
-      animation: warpSuck 2s cubic-bezier(0.5, 0, 0.1, 1) infinite;
+      pointer-events: none;
     }
+
+    .ring1 { animation: warpSuck 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite 0s; }
+    .ring2 { animation: warpSuck 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.8s; }
+    .ring3 { animation: warpSuck 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite 1.6s; }
 
     @keyframes warpSuck {
       0% { 
-        transform: translate(-50%, -50%) scale(1.5) translateZ(300px); 
+        transform: translate(-50%, -50%) scale(1.8) translateZ(400px); 
         opacity: 0; 
         border-width: 2px;
       }
-      20% {
-        opacity: 0.8;
-      }
+      20% { opacity: 0.9; }
       100% { 
-        /* Pulls directly into the dead center */
-        transform: translate(-50%, -50%) scale(0) translateZ(-500px); 
+        transform: translate(-50%, -50%) scale(0.05) translateZ(-400px); 
         opacity: 1; 
-        border-width: 15px;
+        border-width: 12px;
         border-color: #ffffff;
-        box-shadow: inset 0 0 100px #ffffff, 0 0 100px #ffffff;
+        box-shadow: inset 0 0 80px #ffffff, 0 0 80px #ffffff;
       }
     }
 
-    /* Glowing Text Acting As The Window */
+    /* Layer 2 Text glowing with light pulling in */
     #success-screen-layer2 h2 {
       position: relative;
       z-index: 10;
-      font-size: 3.5rem;
+      font-size: 3.2rem;
       font-weight: 900;
-      letter-spacing: 12px;
+      letter-spacing: 10px;
       margin: 0;
       text-transform: uppercase;
-      /* Bright gradient applied to the text fill itself */
-      background: linear-gradient(180deg, #ffffff 0%, #ffff66 35%, #ffaa00 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #ffff77 40%, #ffaa00 100%);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      /* Outer bloom filter instead of rigid text-shadows */
-      filter: drop-shadow(0 0 15px rgba(255, 255, 0, 0.8)) drop-shadow(0 0 40px rgba(255, 100, 0, 0.6));
-      animation: textHover 2s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 15px rgba(255, 255, 0, 0.9)) drop-shadow(0 0 40px rgba(255, 140, 0, 0.7));
+      animation: textGlowPulse 1.8s ease-in-out infinite alternate;
     }
 
-    @keyframes textHover {
+    @keyframes textGlowPulse {
       0% { 
         transform: scale(1); 
-        filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.6)) drop-shadow(0 0 30px rgba(255, 100, 0, 0.4)); 
+        filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.7)) drop-shadow(0 0 25px rgba(255, 120, 0, 0.5)); 
       }
       100% { 
-        transform: scale(1.03); 
-        filter: drop-shadow(0 0 25px rgba(255, 255, 255, 1)) drop-shadow(0 0 60px rgba(255, 200, 0, 0.8)); 
+        transform: scale(1.04); 
+        filter: drop-shadow(0 0 25px rgba(255, 255, 255, 1)) drop-shadow(0 0 60px rgba(255, 220, 0, 0.9)); 
       }
     }
 
@@ -397,7 +393,7 @@
       user-select: text;
     }
 
-    /* --- GLITCH ANIMATIONS --- */
+    /* --- GLITCH ANIMATIONS (Triggered at 20s) --- */
     .glitching .viewport-wrapper {
       animation: screenShake 0.25s infinite alternate;
     }
@@ -472,3 +468,231 @@
     .crash-details {
       margin-top: 30px;
       color: #ffff55;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas pattern generator -->
+  <canvas id="text-static-canvas" width="128" height="128" style="display:none;"></canvas>
+
+  <!-- Main Viewport -->
+  <div class="viewport-wrapper">
+    <div class="background-overlay"></div>
+    <canvas id="static-canvas"></canvas>
+    <canvas id="glitch-canvas"></canvas>
+    <div class="tv-scanlines"></div>
+    <div class="tv-bar"></div>
+    
+    <div class="content">
+      <h1 id="title-heading">Enter_key</h1>
+      <p class="hint">The first door is always the easiest.</p>
+      
+      <div class="input-container">
+        <input type="text" id="key-input" class="key-input" placeholder="ENTER KEY..." autofocus />
+      </div>
+
+      <p class="subtext">Sometimes, something is closer than it appears.</p>
+    </div>
+  </div>
+
+  <!-- Success Screen Overlay (Layer 1 - Green) -->
+  <div id="success-screen">
+    <h2>LAYER 1 COMPLETED</h2>
+    
+    <div class="input-container">
+      <input type="text" id="layer2-input" class="key-input layer2-input" placeholder="ENTER LAYER 2 KEY..." />
+    </div>
+
+    <div class="secret-corner-message">
+      K uvca cyca htqo oqtpkpi nkijv,<br>
+      Cpf eqog cnkxg kp fggr qh pkijv.
+    </div>
+  </div>
+
+  <!-- Success Screen Overlay (Layer 2 - Yellow Vortex Effect) -->
+  <div id="success-screen-layer2">
+    <div class="yellow-light-core"></div>
+    <div class="yellow-tunnel"></div>
+    <div class="warp-ring ring1"></div>
+    <div class="warp-ring ring2"></div>
+    <div class="warp-ring ring3"></div>
+    <h2>LAYER 2 COMPLETED</h2>
+  </div>
+
+  <!-- Crash Screen Overlay -->
+  <div id="crash-screen">
+    <h2>CONNECTION TERMINATED</h2>
+    <p>A fatal exception 0E has occurred at 0028:C0011E36 in VXD SYSTEM(01).</p>
+    <p>The current application will be terminated.</p>
+    <br>
+    <p class="crash-details">*** Error 311</p>
+    <p class="crash-details">*** Key_Was_Lost</p>
+    <br>
+    <p>Press any key to restart your system...</p>
+  </div>
+
+  <script>
+    const staticCanvas = document.getElementById('static-canvas');
+    const staticCtx = staticCanvas.getContext('2d');
+
+    const glitchCanvas = document.getElementById('glitch-canvas');
+    const glitchCtx = glitchCanvas.getContext('2d');
+
+    const textStaticCanvas = document.getElementById('text-static-canvas');
+    const textStaticCtx = textStaticCanvas.getContext('2d');
+    const titleHeading = document.getElementById('title-heading');
+    const keyInput = document.getElementById('key-input');
+    const layer2Input = document.getElementById('layer2-input');
+    const successScreen = document.getElementById('success-screen');
+    const successScreenLayer2 = document.getElementById('success-screen-layer2');
+    const crashScreen = document.getElementById('crash-screen');
+
+    let isGlitching = false;
+    let isHoveringHeading = false;
+    let crashTimer = null;
+
+    function triggerCrash() {
+      if (crashTimer) clearTimeout(crashTimer);
+      document.querySelector('.viewport-wrapper').style.display = 'none';
+      successScreen.style.display = 'none';
+      successScreenLayer2.style.display = 'none';
+      crashScreen.style.display = 'flex';
+    }
+
+    titleHeading.addEventListener('mouseenter', () => isHoveringHeading = true);
+    titleHeading.addEventListener('mouseleave', () => isHoveringHeading = false);
+
+    /* Layer 1 Input Listener */
+    keyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = keyInput.value.trim().toLowerCase();
+        if (value === 'dodecahedron') {
+          if (crashTimer) clearTimeout(crashTimer);
+          document.querySelector('.viewport-wrapper').style.display = 'none';
+          successScreen.style.display = 'flex';
+          layer2Input.focus();
+        } else {
+          triggerCrash();
+        }
+      }
+    });
+
+    /* Layer 2 Input Listener */
+    layer2Input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = layer2Input.value.trim().toLowerCase();
+        if (value === 'shadow') {
+          successScreen.style.display = 'none';
+          successScreenLayer2.style.display = 'flex';
+        } else {
+          triggerCrash();
+        }
+      }
+    });
+
+    function resize() {
+      staticCanvas.width = window.innerWidth;
+      staticCanvas.height = window.innerHeight;
+      glitchCanvas.width = window.innerWidth;
+      glitchCanvas.height = window.innerHeight;
+    }
+
+    function generateStatic() {
+      const w = staticCanvas.width;
+      const h = staticCanvas.height;
+      if (w === 0 || h === 0) return;
+      
+      const imgData = staticCtx.createImageData(w, h);
+      const buffer = new Uint32Array(imgData.data.buffer);
+      const len = buffer.length;
+
+      for (let i = 0; i < len; i++) {
+        if (Math.random() < 0.5) {
+          buffer[i] = 0xffffffff;
+        }
+      }
+
+      staticCtx.putImageData(imgData, 0, 0);
+    }
+
+    function animateTextStatic() {
+      const imgData = textStaticCtx.createImageData(128, 128);
+      const data = imgData.data;
+
+      const noiseThreshold = isHoveringHeading ? 0.8 : 0.5;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const val = Math.random() < noiseThreshold ? 255 : (isHoveringHeading ? 50 : 120);
+        data[i]     = 255; 
+        data[i + 1] = 255; 
+        data[i + 2] = val; 
+        data[i + 3] = 255;
+      }
+
+      textStaticCtx.putImageData(imgData, 0, 0);
+      const dataUrl = textStaticCanvas.toDataURL();
+      titleHeading.style.backgroundImage = `url(${dataUrl})`;
+    }
+
+    function generateFullscreenGlitch() {
+      if (!isGlitching) return;
+
+      const w = glitchCanvas.width;
+      const h = glitchCanvas.height;
+      glitchCtx.clearRect(0, 0, w, h);
+
+      const colors = [
+        'rgba(0, 255, 255, 0.85)', 
+        'rgba(255, 0, 128, 0.85)', 
+        'rgba(0, 100, 255, 0.85)', 
+        'rgba(180, 180, 200, 0.7)',
+        'rgba(0, 0, 0, 0.95)',     
+        'rgba(255, 255, 255, 0.8)' 
+      ];
+
+      const sliceHeight = 4;
+      const rows = Math.ceil(h / sliceHeight);
+
+      for (let r = 0; r < rows; r++) {
+        if (Math.random() < 0.65) {
+          const y = r * sliceHeight;
+          const blockCount = Math.floor(Math.random() * 4) + 1;
+
+          for (let b = 0; b < blockCount; b++) {
+            const x = Math.random() * w;
+            const blockWidth = Math.random() * (w * 0.5) + 40;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            glitchCtx.fillStyle = color;
+            glitchCtx.fillRect(x, y, blockWidth, sliceHeight);
+          }
+        }
+      }
+    }
+
+    function loop() {
+      generateStatic();
+      animateTextStatic();
+      generateFullscreenGlitch();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    loop();
+
+    /* Activate Fullscreen Glitch Mode at 20 seconds */
+    setTimeout(() => {
+      isGlitching = true;
+      document.body.classList.add('glitching');
+      glitchCanvas.style.opacity = '0.85';
+    }, 20000);
+
+    /* Timeout Crash Screen at 45 seconds */
+    crashTimer = setTimeout(() => {
+      triggerCrash();
+    }, 45000);
+  </script>
+</body>
+</html>
